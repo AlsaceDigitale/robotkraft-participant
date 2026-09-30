@@ -1,0 +1,80 @@
+name: Image Docker
+
+# Construit l'image des equipes et la publie sur ghcr.io.
+# Deux runners natifs (pas d'emulation QEMU, qui rend l'installation de torch
+# interminable), puis un manifeste multi-arch qui reunit les deux.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docker/Dockerfile
+      - pyproject.toml
+      - uv.lock
+      - scripts/**
+      - .github/workflows/image.yml
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/robokraft
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Le cache est porte par la registry : une modification de uv.lock ne
+      # retelecharge que les paquets reellement changes.
+      - name: Construire et publier
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          tags: ${{ env.IMAGE }}:${{ matrix.arch }}
+          cache-from: type=registry,ref=${{ env.IMAGE }}:cache-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.IMAGE }}:cache-${{ matrix.arch }},mode=max
+
+      - name: Taille de l'image
+        run: |
+          docker pull "$IMAGE:${{ matrix.arch }}"
+          docker image inspect "$IMAGE:${{ matrix.arch }}" --format '{{.Size}}' \
+            | awk '{printf "  %s : %.2f Go\n", "${{ matrix.arch }}", $1/1024/1024/1024}'
+
+  manifeste:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Reunir les deux architectures sous une seule reference
+        run: |
+          docker buildx imagetools create -t "$IMAGE:latest" \
+            "$IMAGE:amd64" "$IMAGE:arm64"
+          docker buildx imagetools inspect "$IMAGE:latest"

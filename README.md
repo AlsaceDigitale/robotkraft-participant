@@ -65,6 +65,15 @@ Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader
 
 ## Installation
 
+L'image est prete, il n'y a rien a compiler. Tire-la plutot que de la construire, tu gagnes
+une vingtaine de minutes et tu economises la connexion du lieu :
+
+```bash
+docker compose pull      # recupere l'image depuis ghcr.io
+```
+
+Si tu dois vraiment la reconstruire (modification du Dockerfile ou des dependances) :
+
 ```bash
 make build      # Build de l'image Docker
 make setup-host # Groupe dialout (logout/login session juste après)

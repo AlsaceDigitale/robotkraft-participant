@@ -4,15 +4,15 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       network: host
-    image: robokraft:latest
+    image: ${ROBOKRAFT_IMAGE:-ghcr.io/alsacedigitale/robokraft:latest}
     volumes:
       - ./datasets:/workspace/datasets
       - ./scripts:/workspace/scripts
       - ./outputs:/workspace/outputs
       - .cache:/workspace/.cache
+      - uv-cache:/opt/uv-cache
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
-      - VQA_MODEL=${VQA_MODEL:-HuggingFaceTB/SmolVLM-500M-Instruct}
     shm_size: '2gb'
     stdin_open: true
     tty: true
@@ -59,3 +59,6 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+volumes:
+  uv-cache:

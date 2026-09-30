@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 ARG PYTHON_VERSION=3.12.9
 FROM python:${PYTHON_VERSION}-slim
 
@@ -7,8 +8,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/workspace/.venv/bin:$PATH \
     HF_HOME=/workspace/.cache/huggingface \
     HF_LEROBOT_HOME=/workspace/.cache/huggingface/lerobot \
-    TORCH_HOME=/workspace/.cache/torch
+    TORCH_HOME=/workspace/.cache/torch \
+    UV_CACHE_DIR=/opt/uv-cache \
+    UV_LINK_MODE=copy
 
+# Couche systeme : ne change quasiment jamais, donc jamais reconstruite
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libglib2.0-0 ffmpeg \
@@ -21,12 +25,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /workspace
 
+# Dependances. Le cache BuildKit survit entre deux constructions : une modification
+# de uv.lock ne retelecharge que les paquets qui ont reellement change, torch et les
+# autres poids lourds sont repris du cache.
 COPY pyproject.toml uv.lock ./
-RUN uv venv .venv && uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/opt/uv-cache,sharing=locked \
+    uv venv .venv && uv sync --frozen --no-dev
 
 RUN mkdir -p .venv/lib/python3.12/site-packages/cv2/qt/fonts \
     && cp /usr/share/fonts/truetype/dejavu/*.ttf .venv/lib/python3.12/site-packages/cv2/qt/fonts/ 2>/dev/null || true
 
+# En dernier : ce qui change le plus souvent, pour ne rien invalider en amont
 COPY scripts/ scripts/
 
 CMD ["/bin/bash"]
