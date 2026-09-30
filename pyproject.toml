@@ -11,11 +11,27 @@ dependencies = [
     "pyzmq==27.1.0",
 ]
 
+[project.optional-dependencies]
+# Deux variantes exclusives : torch CPU pour les postes sans GPU NVIDIA
+# (image trois fois plus legere), torch CUDA pour le serveur et les portables
+# equipes. La version suit la contrainte de lerobot 0.5.1 (torch<2.11).
+cpu = ["torch==2.10.0"]
+cuda = ["torch==2.10.0"]
+
 [tool.uv]
 exclude-dependencies = ["opencv-python-headless"]
+conflicts = [[{ extra = "cpu" }, { extra = "cuda" }]]
 
 [tool.uv.sources]
 depthai = { index = "luxonis" }
+torch = [
+  { index = "pytorch-cpu", extra = "cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [[tool.uv.index]]
 name = "luxonis"

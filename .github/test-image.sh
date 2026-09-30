@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Verifie qu'une image robokraft est utilisable : dependances importables,
 # entrees LeRobot presentes, scripts compilables, et aucune solution d'epreuve.
-# Usage : .github/test-image.sh <reference-image>
+# Usage : .github/test-image.sh <reference-image> [cpu|cuda]
 set -euo pipefail
-IMG="${1:?usage: test-image.sh <image>}"
+IMG="${1:?usage: test-image.sh <image> [variante]}"
+VARIANTE="${2:-}"
 run() { docker run --rm "$IMG" "$@"; }
 
 echo "-- les dependances s'importent"
@@ -45,5 +46,23 @@ a = torch.ones(64, 64)
 assert torch.allclose(a @ a, torch.full((64, 64), 64.0)), "produit matriciel faux"
 print("  produit matriciel : OK")
 '
+if [ -n "$VARIANTE" ]; then
+  echo "-- la variante $VARIANTE contient ce qu'elle annonce"
+  v=$(run python3 -c 'import torch; print(torch.__version__)')
+  echo "    torch : $v"
+  n=$(run sh -c 'ls .venv/lib/python3.12/site-packages 2>/dev/null | grep -ci "^nvidia\|^triton" || true')
+  echo "    paquets nvidia/triton : $n"
+  case "$VARIANTE" in
+    cpu)
+      case "$v" in *+cu*) echo "  ECHEC : torch CUDA dans la variante cpu" >&2; exit 1;; esac
+      [ "$n" -gt 0 ] && { echo "  ECHEC : $n paquets nvidia dans la variante cpu" >&2; exit 1; }
+      echo "    variante cpu : OK" ;;
+    cuda)
+      case "$v" in *+cu*) : ;; *) echo "  ECHEC : torch sans CUDA dans la variante cuda" >&2; exit 1;; esac
+      [ "$n" -eq 0 ] && { echo "  ECHEC : aucun paquet nvidia dans la variante cuda" >&2; exit 1; }
+      echo "    variante cuda : OK" ;;
+  esac
+fi
+
 echo
 echo "image utilisable."

@@ -3,6 +3,9 @@ ARG PYTHON_VERSION=3.12.9
 FROM python:${PYTHON_VERSION}-slim
 
 ARG UV_VERSION=0.11.21
+# cpu : sans la pile CUDA, environ trois fois plus legere. cuda : pour le
+# serveur d'entrainement et les portables equipes d'un GPU NVIDIA.
+ARG VARIANTE=cpu
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/workspace/.venv/bin:$PATH \
@@ -30,7 +33,7 @@ WORKDIR /workspace
 # autres poids lourds sont repris du cache.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/opt/uv-cache,sharing=locked \
-    uv venv .venv && uv sync --frozen --no-dev
+    uv venv .venv && uv sync --frozen --no-dev --extra "${VARIANTE}"
 
 RUN mkdir -p .venv/lib/python3.12/site-packages/cv2/qt/fonts \
     && cp /usr/share/fonts/truetype/dejavu/*.ttf .venv/lib/python3.12/site-packages/cv2/qt/fonts/ 2>/dev/null || true

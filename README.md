@@ -72,6 +72,20 @@ une vingtaine de minutes et tu economises la connexion du lieu :
 docker compose pull      # recupere l'image depuis ghcr.io
 ```
 
+**Fais-le chez toi avant de venir.** L'image pese environ 2,7 Go, et cinquante
+telechargements simultanes sur la connexion du lieu, le vendredi soir, ce n'est
+pas une bonne soiree.
+
+Si ton portable a un GPU NVIDIA et que tu veux entrainer en local, prends la
+variante CUDA (environ 9 Go) :
+
+```bash
+ROBOKRAFT_IMAGE=ghcr.io/alsacedigitale/robokraft:cuda docker compose pull
+```
+
+Sinon, l'entrainement se fait sur les serveurs GPU distants, et la variante par
+defaut suffit.
+
 Si tu dois vraiment la reconstruire (modification du Dockerfile ou des dependances) :
 
 ```bash

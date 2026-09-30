@@ -27,8 +27,14 @@ jobs:
         include:
           - runner: ubuntu-latest
             arch: amd64
+            variante: cpu
           - runner: ubuntu-24.04-arm
             arch: arm64
+            variante: cpu
+          # CUDA n'existe pas sur ARM, cette variante est donc amd64 seulement
+          - runner: ubuntu-latest
+            arch: amd64
+            variante: cuda
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -39,7 +45,7 @@ jobs:
       # La pile CUDA (torch, cuDNN, cuBLAS, NCCL, triton) depasse l'espace
       # disponible sur le runner amd64. On evacue les SDK preinstalles.
       - name: Liberer de l'espace disque
-        if: matrix.arch == 'amd64'
+        if: matrix.variante == 'cuda'
         run: |
           echo "avant : $(df -h / | awk 'NR==2{print $4}') libres"
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
@@ -65,18 +71,21 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/${{ matrix.arch }}
           push: true
-          tags: ${{ env.IMAGE }}:${{ matrix.arch }}
-          cache-from: type=registry,ref=${{ env.IMAGE }}:cache-${{ matrix.arch }}
-          cache-to: type=registry,ref=${{ env.IMAGE }}:cache-${{ matrix.arch }},mode=max
+          build-args: |
+            VARIANTE=${{ matrix.variante }}
+          tags: ${{ env.IMAGE }}:${{ matrix.variante }}-${{ matrix.arch }}
+          cache-from: type=registry,ref=${{ env.IMAGE }}:cache-${{ matrix.variante }}-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.IMAGE }}:cache-${{ matrix.variante }}-${{ matrix.arch }},mode=max
 
       - name: Taille de l'image
         run: |
-          docker pull "$IMAGE:${{ matrix.arch }}"
-          docker image inspect "$IMAGE:${{ matrix.arch }}" --format '{{.Size}}' \
-            | awk '{printf "  %s : %.2f Go\n", "${{ matrix.arch }}", $1/1024/1024/1024}'
+          T="${{ matrix.variante }}-${{ matrix.arch }}"
+          docker pull "$IMAGE:$T"
+          docker image inspect "$IMAGE:$T" --format '{{.Size}}' \
+            | awk -v t="$T" '{printf "  %s : %.2f Go\n", t, $1/1024/1024/1024}'
 
       - name: Verifier que l'image fonctionne
-        run: .github/test-image.sh "$IMAGE:${{ matrix.arch }}"
+        run: .github/test-image.sh "$IMAGE:${{ matrix.variante }}-${{ matrix.arch }}" "${{ matrix.variante }}"
 
   manifeste:
     needs: build
@@ -89,8 +98,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Reunir les deux architectures sous une seule reference
+      - name: Reunir les architectures sous des references uniques
         run: |
+          # latest : la variante legere, celle que tirent les equipes
           docker buildx imagetools create -t "$IMAGE:latest" \
-            "$IMAGE:amd64" "$IMAGE:arm64"
-          docker buildx imagetools inspect "$IMAGE:latest"
+            "$IMAGE:cpu-amd64" "$IMAGE:cpu-arm64"
+          # cuda : amd64 uniquement, pour le serveur et les portables NVIDIA
+          docker buildx imagetools create -t "$IMAGE:cuda" "$IMAGE:cuda-amd64"
+          echo "== latest"; docker buildx imagetools inspect "$IMAGE:latest"
+          echo "== cuda";   docker buildx imagetools inspect "$IMAGE:cuda"
