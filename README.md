@@ -76,23 +76,43 @@ docker compose pull      # recupere l'image depuis ghcr.io
 telechargements simultanes sur la connexion du lieu, le vendredi soir, ce n'est
 pas une bonne soiree.
 
-Si ton portable a un GPU NVIDIA et que tu veux entrainer en local, prends la
+Si ton portable a un GPU NVIDIA et que tu veux entrainer en local, bascule sur la
 variante CUDA (environ 9 Go) :
 
 ```bash
-ROBOKRAFT_IMAGE=ghcr.io/alsacedigitale/robokraft:cuda docker compose pull
+make use-cuda            # ecrit le choix dans .env, donc il persiste
+docker compose pull
+make which-image         # verifie : doit afficher GPU vu par torch : True
 ```
 
 Sinon, l'entrainement se fait sur les serveurs GPU distants, et la variante par
-defaut suffit.
+defaut suffit. `make use-cpu` revient en arriere.
 
-Si tu dois vraiment la reconstruire (modification du Dockerfile ou des dependances) :
+⚠️ Ne passe pas `ROBOKRAFT_IMAGE=...` directement devant une commande : la valeur
+ne vaut que pour cette commande, et `make train` repartirait sur la variante CPU
+en entrainant sur processeur sans rien signaler.
+
+### Regler ta machine, obligatoire meme si tu tires l'image
+
+Ces trois commandes configurent ton systeme, pas l'image. Sans elles, les bras et
+la camera ne seront pas visibles depuis les conteneurs.
 
 ```bash
-make build      # Build de l'image Docker
-make setup-host # Groupe dialout (logout/login session juste après)
-make setup-udev # Règles udev et symlinks pour le follower et leader (/dev/lerobot_follower + _leader)
-make setup-oak  # Règle udev OAK-D Lite (une seule fois)
+make setup-host # Groupe dialout (deconnecte puis reconnecte ta session juste apres)
+make setup-udev # Regles udev et symlinks /dev/lerobot_follower et _leader
+make setup-oak  # Regle udev pour la camera OAK-D Lite (une seule fois)
+```
+
+Copie aussi le fichier de configuration :
+
+```bash
+cp .env.example .env    # puis renseigne HF_TOKEN
+```
+
+### Reconstruire l'image, seulement si tu modifies le Dockerfile ou les dependances
+
+```bash
+make build
 ```
 
 ### Setup des servomoteurs
@@ -193,3 +213,11 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | `make view-camera DEVICE=/dev/video2` | Preview live webcam USB générique (ET-231 et similaires), exécuté sur l'hôte |
 | `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Capture une photo |
 
+---
+
+## Bloque ? Ou demander de l'aide
+
+- **Pendant l'evenement** : le salon `support-technique` du Discord, ou un coach dans la salle.
+- **Discord** : https://discord.gg/njTBunuwUA
+- **Documentation de l'evenement** : lieu, horaires, repas, reglement, epreuves.
+  https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX
