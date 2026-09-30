@@ -86,10 +86,3 @@ eval-remote:
 		-e CHUNK_SIZE_THRESHOLD=$(or $(CHUNK_SIZE_THRESHOLD),0) \
 		-e DEBUG_QUEUE=$(or $(DEBUG_QUEUE),false) \
 		lerobot bash scripts/shell/eval_remote_with_oak.sh
-
-# Enregistre une trajectoire par téléopération
-# Usage : make record-traj TRAJ=trajectory ou datasets/trajectory.npy [DURATION=5]
-# Rejoue une trajectoire sur le follower
-# Usage : make replay-traj TRAJ=trajectory ou datasets/trajectory.npy
-# Rejoue une séquence de trajectoires
-# Usage : make replay-sequence SEQ=sequences/test/sequence.json

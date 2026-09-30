@@ -132,7 +132,7 @@ make check-voltage # tension de chaque servo (follower + leader)
 
 ## Features
 
-Téléopération leader/follower, enregistrement de dataset pour l'imitation learning et replay de trajectoires uniques ou de séquences planifiées sur plusieurs mouvements.
+Téléopération leader/follower, enregistrement de datasets pour l'apprentissage par imitation, et rejeu d'un épisode enregistré.
 
 Côté entraînement : policies ACT / SmolVLA / π0, sur GPU local ou distant. L'évaluation peut tourner en local (robot + policy sur la même machine) ou à distance, avec la policy via serveur d'inférence pendant que robot et caméra restent en local.
 
@@ -163,6 +163,8 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | `make check-devices` | Vérifie `ACM0`=follower, `ACM1`=leader |
 | `make scan-motors` | Liste les IDs des servo-moteurs |
 | `make check-voltage` | Tension des servos (follower + leader) |
+| `make check-voltage-follower` / `make check-voltage-leader` | Tension d'un seul bras |
+| `make check-oak` | Verifie que la camera OAK-D est bien detectee par l'hote |
 | `make script-follower FILE=...` / `make script-leader FILE=...` | Lance un script Python avec accès direct à un seul bras |
 
 ### Enregistrement / replay
