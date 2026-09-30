@@ -146,9 +146,6 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 |----------|-------------|
 | `make record HF_USER=... TASK=...` | Enregistre un dataset de téléopération (`[NUM_EPISODES]`, `[EPISODE_TIME]`, `[RESET_TIME]`, `[RESUME]`) |
 | `make replay-episode HF_USER=... TASK=... [EPISODE=0]` | Rejoue un épisode d'un dataset enregistré (follower seul) |
-| `make record-traj [TRAJ=...] [DURATION=5]` | Enregistre une trajectoire unique par téléopération |
-| `make replay-traj [TRAJ=...]` | Rejoue une trajectoire (follower seul) |
-| `make replay-sequence SEQ=...` | Rejoue une séquence de trajectoires planifiées |
 
 ### Entraînement / évaluation
 
@@ -165,6 +162,7 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | Commande | Description |
 |----------|-------------|
 | `make detect-oak` / `make detect-cameras` | Détection caméra OAK-D Lite / caméras disponibles |
+| `make calibrate-wb` | Calibration de la balance des blancs |
 | `make view-camera DEVICE=/dev/video2` | Preview live webcam USB générique (ET-231 et similaires), exécuté sur l'hôte |
 | `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Capture une photo |
 

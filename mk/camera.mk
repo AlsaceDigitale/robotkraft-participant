@@ -15,11 +15,6 @@ view-camera:
 	FPS=$(or $(FPS),30) \
 	python3 scripts/camera/camera_viewer.py
 
-
-
-
-
-
 # Prend une photo et la sauvegarde dans datasets/
 # Usage : make photo [FILE=datasets/test/frame.jpg] [CROP_X=0 CROP_Y=160 CROP_W=600 CROP_H=320]
 photo:
@@ -31,5 +26,7 @@ photo:
 		-e CROP_H=$(or $(CROP_H),0) \
 		lerobot-camera python3 scripts/camera/capture_photo.py
 
-
-
+# Calibration balance des blancs
+calibrate-wb:
+	xhost +local:docker
+	docker compose run --rm -e DISPLAY=$(DISPLAY) -v /tmp/.X11-unix:/tmp/.X11-unix lerobot-camera bash scripts/shell/calibrate_with_oak.sh calibrate_wb.py

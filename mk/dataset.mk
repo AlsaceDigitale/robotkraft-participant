@@ -89,22 +89,7 @@ eval-remote:
 
 # Enregistre une trajectoire par téléopération
 # Usage : make record-traj TRAJ=trajectory ou datasets/trajectory.npy [DURATION=5]
-record-traj:
-	docker compose run --rm \
-		-e DURATION=$(or $(DURATION),5) \
-		-e TRAJ_FILE=/workspace/datasets/$(notdir $(or $(TRAJ:.npy=),trajectory)).npy \
-		lerobot python3 scripts/robot/record_trajectory.py
-
 # Rejoue une trajectoire sur le follower
 # Usage : make replay-traj TRAJ=trajectory ou datasets/trajectory.npy
-replay-traj:
-	docker compose run --rm \
-		-e TRAJ_FILE=/workspace/datasets/$(notdir $(or $(TRAJ:.npy=),trajectory)).npy \
-		lerobot-follower python3 scripts/robot/replay_trajectory.py
-
 # Rejoue une séquence de trajectoires
 # Usage : make replay-sequence SEQ=sequences/test/sequence.json
-replay-sequence:
-	docker compose run --rm \
-		-e SEQUENCE_FILE=/workspace/datasets/$(or $(SEQ),sequences/test/sequence.json) \
-		lerobot-follower python3 scripts/robot/sequence_replay.py

@@ -1,7 +1,0 @@
-{
-  "trajectories": [
-    "../../attraper_sachet.npy",
-    "../../deplacer_sachet.npy"
-  ],
-  "pause_between_s": 1.0
-}
