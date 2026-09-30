@@ -9,7 +9,6 @@ dependencies = [
     "opencv-python==4.13.0.92",
     "depthai==3.7.1",
     "pyzmq==27.1.0",
-    "easyocr==1.7.2",
 ]
 
 [tool.uv]
