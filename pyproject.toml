@@ -1,0 +1,23 @@
+[project]
+name = "robokraft"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "lerobot[feetech,async]==0.5.1",
+    "transformers==5.3.0",
+    "accelerate==1.14.0",
+    "opencv-python==4.13.0.92",
+    "depthai==3.7.1",
+    "pyzmq==27.1.0",
+    "easyocr==1.7.2",
+]
+
+[tool.uv]
+exclude-dependencies = ["opencv-python-headless"]
+
+[tool.uv.sources]
+depthai = { index = "luxonis" }
+
+[[tool.uv.index]]
+name = "luxonis"
+url = "https://artifacts.luxonis.com/artifactory/luxonis-python-release-local/"
