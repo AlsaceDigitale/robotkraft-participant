@@ -1,10 +1,12 @@
 # RobotKraft, version participants
 
-> Ce dépôt est la base technique fournie aux équipes de RobotKraft 2026 : environnement Docker,
-> pilotage des bras, enregistrement et rejeu de trajectoires, entraînement et évaluation de
-> policies, outils de vision et de calibration.
+> Base technique fournie aux équipes de RobotKraft 2026 : environnement Docker prêt à l'emploi,
+> détection des bras et des caméras, diagnostic matériel, et raccourcis vers les commandes
+> LeRobot (téléopération, enregistrement de datasets, entraînement, évaluation en local ou sur
+> GPU distant).
 >
-> Il ne contient pas de solution aux épreuves : à vous de les écrire.
+> La perception et la stratégie ne sont pas fournies : c'est ce que le challenge évalue, à vous
+> de l'écrire.
 >
 > Documentation de l'événement : https://docmost.alsacedigitale.org/share/yx3k53tasq/p/zCgLda8Z26
 
