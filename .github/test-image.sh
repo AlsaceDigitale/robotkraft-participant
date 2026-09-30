@@ -39,6 +39,18 @@ if run sh -c 'test -d scripts/tasks'; then
 fi
 echo "  scripts/tasks absent : OK"
 
+echo "-- torch et torchvision sont compatibles"
+# Un torchvision compile pour CUDA face a un torch CPU passe l'import sans
+# broncher et casse au premier appel d'operateur natif. On appelle donc nms.
+run python3 -c '
+import torch, torchvision
+from torchvision.ops import nms
+boites = torch.tensor([[0., 0., 10., 10.], [1., 1., 11., 11.]])
+scores = torch.tensor([0.9, 0.8])
+assert nms(boites, scores, 0.5).numel() >= 1
+print("  torch", torch.__version__, "/ torchvision", torchvision.__version__, ": operateurs natifs OK")
+'
+
 echo "-- torch fonctionne reellement (petit calcul)"
 run python3 -c '
 import torch
