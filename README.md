@@ -1,14 +1,15 @@
 # RobotKraft, version participants
 
-> Base technique fournie aux équipes de RobotKraft 2026 : environnement Docker prêt à l'emploi,
-> détection des bras et des caméras, diagnostic matériel, et raccourcis vers les commandes
-> LeRobot (téléopération, enregistrement de datasets, entraînement, évaluation en local ou sur
-> GPU distant).
+> Base technique du challenge RobotKraft : environnement Docker prêt à l'emploi, détection des
+> bras et des caméras, diagnostic matériel, et raccourcis vers les commandes LeRobot
+> (téléopération, enregistrement de datasets, entraînement, évaluation en local ou sur GPU
+> distant).
 >
 > La perception et la stratégie ne sont pas fournies : c'est ce que le challenge évalue, à vous
 > de l'écrire.
 >
-> Documentation de l'événement : https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX
+> Les informations propres à chaque édition (lieu, horaires, règlement, épreuves, entraide)
+> sont communiquées à part.
 
 Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader/follower), imitation learning avec [LeRobot](https://huggingface.co/docs/lerobot), le tout conteneurisé sous Docker.
 
@@ -72,9 +73,8 @@ une vingtaine de minutes et tu économises la connexion du lieu :
 docker compose pull      # récupère l'image depuis ghcr.io
 ```
 
-**Fais-le chez toi avant de venir.** L'image pèse environ 2,7 Go, et cinquante
-téléchargements simultanés sur la connexion du lieu, le vendredi soir, ce n'est
-pas une bonne soirée.
+**Fais-le chez toi avant de venir.** L'image pèse environ 2,7 Go, et des dizaines de
+téléchargements simultanés sur la connexion du lieu, ce n'est pas une bonne idée.
 
 Si ton portable a un GPU NVIDIA et que tu veux entraîner en local, bascule sur la
 variante CUDA (environ 9 Go) :
@@ -222,15 +222,7 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 
 ---
 
-## Bloqué ? Où demander de l'aide
+## Bloqué ?
 
-- **Pendant l'événement** : le salon `support-technique` du Discord, ou un coach dans la salle.
-
-## Où est quoi
-
-| Outil | Ce qu'on y trouve |
-| --- | --- |
-| **Ce dépôt** | L'environnement technique, les commandes, le matériel à apporter |
-| **[Discord](https://discord.gg/njTBunuwUA)** | Les annonces, ton équipe, l'entraide, le support technique |
-| **[Documentation](https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX)** | Le lieu, les horaires, les repas, le règlement, les épreuves |
-| **Flots** | Le suivi des tâches de ton équipe, accès communiqué à l'ouverture |
+Pendant l'événement, le canal d'entraide et le contact de l'organisation vous sont
+communiqués séparément.
