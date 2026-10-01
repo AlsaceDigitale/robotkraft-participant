@@ -65,42 +65,42 @@ Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader
 
 ## Installation
 
-L'image est prete, il n'y a rien a compiler. Tire-la plutot que de la construire, tu gagnes
-une vingtaine de minutes et tu economises la connexion du lieu :
+L'image est prête, il n'y a rien à compiler. Tire-la plutôt que de la construire, tu gagnes
+une vingtaine de minutes et tu économises la connexion du lieu :
 
 ```bash
-docker compose pull      # recupere l'image depuis ghcr.io
+docker compose pull      # récupère l'image depuis ghcr.io
 ```
 
-**Fais-le chez toi avant de venir.** L'image pese environ 2,7 Go, et cinquante
-telechargements simultanes sur la connexion du lieu, le vendredi soir, ce n'est
-pas une bonne soiree.
+**Fais-le chez toi avant de venir.** L'image pèse environ 2,7 Go, et cinquante
+téléchargements simultanés sur la connexion du lieu, le vendredi soir, ce n'est
+pas une bonne soirée.
 
-Si ton portable a un GPU NVIDIA et que tu veux entrainer en local, bascule sur la
+Si ton portable a un GPU NVIDIA et que tu veux entraîner en local, bascule sur la
 variante CUDA (environ 9 Go) :
 
 ```bash
-make use-cuda            # ecrit le choix dans .env, donc il persiste
+make use-cuda            # écrit le choix dans .env, donc il persiste
 docker compose pull
-make which-image         # verifie : doit afficher GPU vu par torch : True
+make which-image         # vérifie : doit afficher GPU vu par torch : True
 ```
 
-Sinon, l'entrainement se fait sur les serveurs GPU distants, et la variante par
-defaut suffit. `make use-cpu` revient en arriere.
+Sinon, l'entraînement se fait sur les serveurs GPU distants, et la variante par
+défaut suffit. `make use-cpu` revient en arrière.
 
 ⚠️ Ne passe pas `ROBOTKRAFT_IMAGE=...` directement devant une commande : la valeur
 ne vaut que pour cette commande, et `make train` repartirait sur la variante CPU
-en entrainant sur processeur sans rien signaler.
+en entraînant sur processeur sans rien signaler.
 
-### Regler ta machine, obligatoire meme si tu tires l'image
+### Régler ta machine, obligatoire même si tu tires l'image
 
-Ces trois commandes configurent ton systeme, pas l'image. Sans elles, les bras et
-la camera ne seront pas visibles depuis les conteneurs.
+Ces trois commandes configurent ton système, pas l'image. Sans elles, les bras et
+la caméra ne seront pas visibles depuis les conteneurs.
 
 ```bash
-make setup-host # Groupe dialout (deconnecte puis reconnecte ta session juste apres)
-make setup-udev # Regles udev et symlinks /dev/lerobot_follower et _leader
-make setup-oak  # Regle udev pour la camera OAK-D Lite (une seule fois)
+make setup-host # Groupe dialout (déconnecte puis reconnecte ta session juste après)
+make setup-udev # Règles udev et symlinks /dev/lerobot_follower et _leader
+make setup-oak  # Règle udev pour la caméra OAK-D Lite (une seule fois)
 ```
 
 Copie aussi le fichier de configuration :
@@ -109,7 +109,7 @@ Copie aussi le fichier de configuration :
 cp .env.example .env    # puis renseigne HF_TOKEN
 ```
 
-### Reconstruire l'image, seulement si tu modifies le Dockerfile ou les dependances
+### Reconstruire l'image, seulement si tu modifies le Dockerfile ou les dépendances
 
 ```bash
 make build
@@ -117,15 +117,15 @@ make build
 
 ### ⛔ Ne reconfigure pas les servomoteurs
 
-Les identifiants des servos sont **deja definis sur les bras qu'on te prete**, et
-toute la chaine en depend. Les redefinir casse le bras pour toi et pour l'equipe
-qui l'utilisera apres toi, et il faut ensuite le reconfigurer servo par servo.
+Les identifiants des servos sont **déjà définis sur les bras qu'on te prête**, et
+toute la chaîne en dépend. Les redéfinir casse le bras pour toi et pour l'équipe
+qui l'utilisera après toi, et il faut ensuite le reconfigurer servo par servo.
 
 **Ne lance jamais `lerobot-setup-motors`, ni aucune commande de configuration des
-identifiants moteurs.** Si un servo semble muet ou mal numerote, ce n'est pas a toi
-de le reparer : viens voir un coach.
+identifiants moteurs.** Si un servo semble muet ou mal numéroté, ce n'est pas à toi
+de le réparer : viens voir un coach.
 
-Pour verifier que les servos repondent, sans rien modifier :
+Pour vérifier que les servos répondent, sans rien modifier :
 
 ```bash
 make scan-motors    # liste les identifiants vus sur le bus
@@ -191,7 +191,7 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | `make scan-motors` | Liste les IDs des servo-moteurs |
 | `make check-voltage` | Tension des servos (follower + leader) |
 | `make check-voltage-follower` / `make check-voltage-leader` | Tension d'un seul bras |
-| `make check-oak` | Verifie que la camera OAK-D est bien detectee par l'hote |
+| `make check-oak` | Vérifie que la caméra OAK-D est bien détectée par l'hôte |
 | `make script-follower FILE=...` / `make script-leader FILE=...` | Lance un script Python avec accès direct à un seul bras |
 
 ### Enregistrement / replay
@@ -222,9 +222,9 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 
 ---
 
-## Bloque ? Ou demander de l'aide
+## Bloqué ? Où demander de l'aide
 
-- **Pendant l'evenement** : le salon `support-technique` du Discord, ou un coach dans la salle.
+- **Pendant l'événement** : le salon `support-technique` du Discord, ou un coach dans la salle.
 - **Discord** : https://discord.gg/njTBunuwUA
-- **Documentation de l'evenement** : lieu, horaires, repas, reglement, epreuves.
+- **Documentation de l'événement** : lieu, horaires, repas, règlement, épreuves.
   https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX
