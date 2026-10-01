@@ -36,7 +36,8 @@ Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader
 |-------------------------|
 | SO-ARM101               |
 | LeRobot (HuggingFace)   |
-| OAK-D Lite (depthai)    |
+| Caméra poignet : InnoMaker U20CAM ou ET-S231 selon le poste (toutes deux USB UVC) |
+| Caméra de scène (optionnelle, 11 disponibles sur place) : OAK-D Lite (depthai) |
 | Python 3.12.9 + uv      |
 | Docker                  |
 
@@ -149,7 +150,14 @@ make check-devices # vérifie ACM0=follower, ACM1=leader
 make check-voltage # tension de chaque servo (follower + leader)
 ```
 
-### Caméra OAK-D Lite
+### Caméra poignet : InnoMaker U20CAM ou ET-S231 selon le poste
+
+- Caméra USB UVC standard (U20CAM sur les kits 1-8, ET-S231 intégrée sur les kits 9-11), aucune règle udev à poser
+- `make detect-cameras` -> liste les caméras USB disponibles dans le container
+- `make view-camera DEVICE=/dev/videoX` -> preview live sur l'hôte, pour trouver le bon device
+- ET-S231 (kits 9-11) : mise au point MANUELLE, par la bague de l'objectif. Avant d'enregistrer des démonstrations, vérifiez avec `make view-camera` que l'image est nette à la distance où le bras saisit les objets, puis ne touchez plus à la bague : un réglage qui bouge en cours de route rend vos données d'entraînement incohérentes.
+
+### Caméra de scène (optionnelle, 11 disponibles sur place) : OAK-D Lite
 
 - **USB3 obligatoire**
 - `make setup-oak` une seule fois (règle udev + symlink `/dev/oak`)
@@ -215,9 +223,10 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 
 | Commande | Description |
 |----------|-------------|
-| `make detect-oak` / `make detect-cameras` | Détection caméra OAK-D Lite / caméras disponibles |
+| `make detect-cameras` | Détection des caméras USB disponibles (U20CAM, ET-S231 et autres UVC) |
+| `make detect-oak` | Détection caméra OAK-D Lite (option) |
 | `make calibrate-wb` | Calibration de la balance des blancs |
-| `make view-camera DEVICE=/dev/video2` | Preview live webcam USB générique (ET-231 et similaires), exécuté sur l'hôte |
+| `make view-camera DEVICE=/dev/video2` | Preview live webcam USB (U20CAM, ET-S231 et autres UVC), exécuté sur l'hôte |
 | `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Capture une photo |
 
 ---
