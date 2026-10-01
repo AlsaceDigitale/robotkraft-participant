@@ -17,13 +17,11 @@ Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader
 
 ## Sécurité : ordre de branchement
 
-**Branchement :**
+⚠️ Deux erreurs détruisent du matériel.
 
-1. Alimentation **d'abord** (7,4V nominal, servos STS3215 : vérifier le sticker OUTPUT avant de brancher)
-2. Câble USB **follower**
-3. Câble USB **leader**
+**L'alimentation d'abord, l'USB ensuite.** USB branché avant l'alimentation, le port USB alimente la carte et peut griller. Ordre : alimentation, puis USB follower, puis USB leader. Pour débrancher, l'inverse exact : USB leader, USB follower, puis enfin alimentation.
 
-**Pour débrancher, ordre inverse :** USB leader, USB follower puis enfin alimentation.
+**Chaque bras a sa tension et les connecteurs sont interchangeables.** Follower 12V, leader 5V. Le 12V sur un leader le détruit. Repérage par couleur : vert = 5V = leader, blanc = 12V = follower. Le fil vert sur le fil vert, le fil blanc sur le fil blanc.
 
 - Erreur `input voltage error` sous charge (~5,4V) : alimentation insuffisante.
 - Ports `/dev/ttyACM0`/`ACM1` s'attribuent selon l'ordre de branchement (follower en premier = `ACM0`). Vérifier `ls /dev/ttyACM*` avant chaque session.

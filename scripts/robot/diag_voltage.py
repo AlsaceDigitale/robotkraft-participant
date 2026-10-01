@@ -1,4 +1,4 @@
-"""Affiche la tension mesurée par chaque moteur du bus follower. Diagnostic alimentation (servos STS3215 : 7,4V nominal)"""
+"""Affiche la tension mesurée par chaque moteur du bus follower. Diagnostic alimentation (follower : 12V nominal)"""
 
 import os
 from lerobot.motors.feetech import FeetechMotorsBus
