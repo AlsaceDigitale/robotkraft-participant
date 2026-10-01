@@ -22,7 +22,7 @@ build:
 	docker compose build lerobot
 
 lock:
-	docker run --rm -v "$$(pwd):/workspace/hostrepo" -w /workspace/hostrepo robokraft:latest uv lock
+	docker run --rm -v "$$(pwd):/workspace/hostrepo" -w /workspace/hostrepo robotkraft:latest uv lock
 
 up:
 	docker compose up -d lerobot
@@ -41,15 +41,15 @@ shell-robot:
 # dans .env. Sans ca, une valeur passee en ligne de commande ne vaut que pour
 # la commande en cours.
 use-cuda:
-	@touch .env && sed -i.bak '/^ROBOKRAFT_IMAGE=/d' .env && rm -f .env.bak
-	@echo 'ROBOKRAFT_IMAGE=ghcr.io/alsacedigitale/robokraft:cuda' >> .env
+	@touch .env && sed -i.bak '/^ROBOTKRAFT_IMAGE=/d' .env && rm -f .env.bak
+	@echo 'ROBOTKRAFT_IMAGE=ghcr.io/alsacedigitale/robotkraft:cuda' >> .env
 	@echo "Variante CUDA selectionnee. Lance : docker compose pull"
 
 use-cpu:
-	@touch .env && sed -i.bak '/^ROBOKRAFT_IMAGE=/d' .env && rm -f .env.bak
+	@touch .env && sed -i.bak '/^ROBOTKRAFT_IMAGE=/d' .env && rm -f .env.bak
 	@echo "Variante CPU selectionnee (defaut). Lance : docker compose pull"
 
 # Dit quelle variante est reellement active et si torch voit un GPU
 which-image:
-	@echo "image : $${ROBOKRAFT_IMAGE:-$$(grep -E '^ROBOKRAFT_IMAGE=' .env 2>/dev/null | cut -d= -f2- || echo 'ghcr.io/alsacedigitale/robokraft:latest (defaut)')}"
+	@echo "image : $${ROBOTKRAFT_IMAGE:-$$(grep -E '^ROBOTKRAFT_IMAGE=' .env 2>/dev/null | cut -d= -f2- || echo 'ghcr.io/alsacedigitale/robotkraft:latest (defaut)')}"
 	@docker compose run --rm lerobot-base python3 -c "import torch; print('torch :', torch.__version__); print('GPU vu par torch :', torch.cuda.is_available())" 2>/dev/null || echo "(image non tiree)"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifie qu'une image robokraft est utilisable : dependances importables,
+# Verifie qu'une image robotkraft est utilisable : dependances importables,
 # entrees LeRobot presentes, scripts compilables, et aucune solution d'epreuve.
 # Usage : .github/test-image.sh <reference-image> [cpu|cuda]
 set -euo pipefail

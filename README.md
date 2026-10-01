@@ -88,7 +88,7 @@ make which-image         # verifie : doit afficher GPU vu par torch : True
 Sinon, l'entrainement se fait sur les serveurs GPU distants, et la variante par
 defaut suffit. `make use-cpu` revient en arriere.
 
-⚠️ Ne passe pas `ROBOKRAFT_IMAGE=...` directement devant une commande : la valeur
+⚠️ Ne passe pas `ROBOTKRAFT_IMAGE=...` directement devant une commande : la valeur
 ne vaut que pour cette commande, et `make train` repartirait sur la variante CPU
 en entrainant sur processeur sans rien signaler.
 
@@ -174,7 +174,7 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 
 | Commande | Description |
 |----------|-------------|
-| `make build` | Build l'image Docker `robokraft:latest` |
+| `make build` | Build l'image Docker `robotkraft:latest` |
 | `make shell` | Shell dans `lerobot-base` (sans robot) |
 | `make lock` | Régénère `uv.lock` |
 | `make setup-host` | Ajoute l'utilisateur au groupe `dialout` |

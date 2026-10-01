@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       network: host
-    image: ${ROBOKRAFT_IMAGE:-ghcr.io/alsacedigitale/robokraft:latest}
+    image: ${ROBOTKRAFT_IMAGE:-ghcr.io/alsacedigitale/robotkraft:latest}
     volumes:
       - ./datasets:/workspace/datasets
       - ./scripts:/workspace/scripts
