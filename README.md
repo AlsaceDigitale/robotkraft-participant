@@ -8,7 +8,7 @@
 > La perception et la stratégie ne sont pas fournies : c'est ce que le challenge évalue, à vous
 > de l'écrire.
 >
-> Documentation de l'événement : https://docmost.alsacedigitale.org/share/yx3k53tasq/p/zCgLda8Z26
+> Documentation de l'événement : https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX
 
 Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader/follower), imitation learning avec [LeRobot](https://huggingface.co/docs/lerobot), le tout conteneurisé sous Docker.
 
@@ -225,6 +225,12 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 ## Bloqué ? Où demander de l'aide
 
 - **Pendant l'événement** : le salon `support-technique` du Discord, ou un coach dans la salle.
-- **Discord** : https://discord.gg/njTBunuwUA
-- **Documentation de l'événement** : lieu, horaires, repas, règlement, épreuves.
-  https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX
+
+## Où est quoi
+
+| Outil | Ce qu'on y trouve |
+| --- | --- |
+| **Ce dépôt** | L'environnement technique, les commandes, le matériel à apporter |
+| **[Discord](https://discord.gg/njTBunuwUA)** | Les annonces, ton équipe, l'entraide, le support technique |
+| **[Documentation](https://docmost.alsacedigitale.org/share/7znmwljzor/p/REgtr0f3SX)** | Le lieu, les horaires, les repas, le règlement, les épreuves |
+| **Flots** | Le suivi des tâches de ton équipe, accès communiqué à l'ouverture |
