@@ -115,13 +115,21 @@ cp .env.example .env    # puis renseigne HF_TOKEN
 make build
 ```
 
-### Setup des servomoteurs
+### ⛔ Ne reconfigure pas les servomoteurs
+
+Les identifiants des servos sont **deja definis sur les bras qu'on te prete**, et
+toute la chaine en depend. Les redefinir casse le bras pour toi et pour l'equipe
+qui l'utilisera apres toi, et il faut ensuite le reconfigurer servo par servo.
+
+**Ne lance jamais `lerobot-setup-motors`, ni aucune commande de configuration des
+identifiants moteurs.** Si un servo semble muet ou mal numerote, ce n'est pas a toi
+de le reparer : viens voir un coach.
+
+Pour verifier que les servos repondent, sans rien modifier :
 
 ```bash
-sudo chmod 666 /dev/ttyACM0
-sudo chmod 666 /dev/ttyACM1
-make setup-motors-follower  # Setup servomoteurs follower
-make setup-motors-leader    # Setup servomoteurs leader
+make scan-motors    # liste les identifiants vus sur le bus
+make check-voltage  # tension de chaque servo
 ```
 
 ### Calibration des robots
@@ -178,7 +186,6 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | Commande | Description |
 |----------|-------------|
 | `make teleop` | Téléopération leader/follower en direct |
-| `make setup-motors-follower` / `make setup-motors-leader` | Identification des servos d'un bras (une fois) |
 | `make calibrate-follower` / `make calibrate-leader` | Calibration d'un bras (une fois) |
 | `make check-devices` | Vérifie `ACM0`=follower, `ACM1`=leader |
 | `make scan-motors` | Liste les IDs des servo-moteurs |

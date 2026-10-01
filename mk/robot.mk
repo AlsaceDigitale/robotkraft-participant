@@ -1,16 +1,5 @@
 # Ces cibles nécessitent make setup-udev (une fois) pour créer /dev/lerobot_*
 
-# Règle les IDs des servo-moteurs. À lancer une seule fois par bras, avant assemblage
-setup-motors-follower:
-	docker compose run --rm lerobot-follower lerobot-setup-motors \
-		--robot.type=so101_follower \
-		--robot.port=/dev/ttyACM0
-
-setup-motors-leader:
-	docker compose run --rm lerobot-leader lerobot-setup-motors \
-		--teleop.type=so101_leader \
-		--teleop.port=/dev/ttyACM1
-
 # Les cibles calibrate-follower et calibrate-leader sont à lancer une seule fois pour chaque bras pour lancer la calibration le leader et le follower
 calibrate-follower:
 	docker compose run --rm lerobot lerobot-calibrate \
