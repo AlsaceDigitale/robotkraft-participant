@@ -1,4 +1,4 @@
-"""Preview live d'une webcam USB générique (ET-231 et similaires) via V4L2. Affiche résolution/fps réel à l'écran"""
+"""Preview live d'une webcam USB générique (ET-S231 et similaires) via V4L2. Affiche résolution/fps réel à l'écran"""
 
 import os
 import sys

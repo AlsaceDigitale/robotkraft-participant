@@ -155,7 +155,7 @@ make check-voltage # tension de chaque servo (follower + leader)
 - Caméra USB UVC standard (U20CAM sur les kits 1-8, ET-S231 intégrée sur les kits 9-11), aucune règle udev à poser
 - `make detect-cameras` -> liste les caméras USB disponibles dans le container
 - `make view-camera DEVICE=/dev/videoX` -> preview live sur l'hôte, pour trouver le bon device
-- ET-S231 (kits 9-11) : mise au point MANUELLE, par la bague de l'objectif. Avant d'enregistrer des démonstrations, vérifiez avec `make view-camera` que l'image est nette à la distance où le bras saisit les objets, puis ne touchez plus à la bague : un réglage qui bouge en cours de route rend vos données d'entraînement incohérentes.
+- ET-S231 (kits 9-11) : mise au point MANUELLE, par la bague de l'objectif. Avant d'enregistrer des démonstrations, vérifiez dans un aperçu caméra (`make view-camera DEVICE=/dev/videoX` sous Linux, ou l'application caméra du système sous macOS/Windows) que l'image est nette à la distance où le bras saisit les objets, puis ne touchez plus à la bague : un réglage qui bouge en cours de route rend vos données d'entraînement incohérentes.
 
 ### Caméra de scène (optionnelle, 11 disponibles sur place) : OAK-D Lite
 

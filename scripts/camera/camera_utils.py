@@ -82,7 +82,7 @@ class ZMQCamera:
 
 
 class V4L2Camera:
-    """Webcam USB générique (ET-231 et similaires) via V4L2/OpenCV. drop-in pour cv2.VideoCapture"""
+    """Webcam USB générique (ET-S231 et similaires) via V4L2/OpenCV. drop-in pour cv2.VideoCapture"""
 
     def __init__(self, device="/dev/video0", width=1920, height=1080, fps=30, fourcc="MJPG"):
         self.device = device

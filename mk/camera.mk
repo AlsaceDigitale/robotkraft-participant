@@ -6,7 +6,7 @@ detect-oak: check-oak
 detect-cameras:
 	docker compose run --rm lerobot python3 scripts/camera/camera_detect.py
 
-# Preview live webcam USB générique (ET-231 et similaires) - exécuté en direct sur l'hôte, pas de docker (évite de tirer toute la stack ML pour une simple webcam)
+# Preview live webcam USB générique (ET-S231 et similaires) - exécuté en direct sur l'hôte, pas de docker (évite de tirer toute la stack ML pour une simple webcam)
 # Usage : make view-camera [DEVICE=/dev/video0] [WIDTH=1920 HEIGHT=1080 FPS=30]
 view-camera:
 	DEVICE=$(or $(DEVICE),/dev/video0) \
