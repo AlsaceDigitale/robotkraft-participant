@@ -24,12 +24,20 @@ def main():
     n = 0
     t_fps = time.time()
     fps_disp = 0.0
+    consecutive_misses = 0
+    # 15 lectures ratées d'affilée (~30s à 2s/lecture) : couvre le warm-up du serveur
+    # (10 frames jetées avant publication) même à FPS bas, pas juste une vraie coupure.
+    MAX_CONSECUTIVE_MISSES = 15
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Erreur: frame vide (flux ZMQ coupé ?)", file=sys.stderr)
-            break
+            consecutive_misses += 1
+            if consecutive_misses >= MAX_CONSECUTIVE_MISSES:
+                print("Erreur: frame vide (flux ZMQ coupé ?)", file=sys.stderr)
+                break
+            continue
+        consecutive_misses = 0
 
         n += 1
         elapsed = time.time() - t_fps
