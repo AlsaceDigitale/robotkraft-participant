@@ -170,9 +170,12 @@ Testé sur Apple Silicon : lerobot, depthai, opencv et torch (avec MPS) s'instal
 
 ```bash
 uv sync --no-dev --extra cpu   # équivalent natif de ce que fait le Dockerfile
+source .venv/bin/activate      # à refaire dans chaque nouveau terminal
 ```
 
 ⚠️ Pas de `uv pip install -e .` : le projet n'a pas de `[build-system]`, seul `uv sync` fonctionne (sinon erreur de build setuptools sans rapport avec macOS).
+
+⚠️ Sans l'activation (ou `.venv/bin/python` à la place de `python3` ci-dessous), les commandes `python3 scripts/...` de cette section utilisent l'interpréteur système et échouent avec `ModuleNotFoundError: No module named 'lerobot'`.
 
 **Ports série.** macOS n'attribue pas `/dev/ttyACM0`/`ACM1` : chaque bras apparaît en `/dev/cu.usbmodemXXXX`, nom variable, sans ordre stable. Identifier automatiquement quel port est le follower et lequel est le leader (par la tension : follower ~12V, leader ~5V) et obtenir les `export` à copier-coller :
 
@@ -446,9 +449,12 @@ Tested on Apple Silicon: lerobot, depthai, opencv and torch (with MPS) install a
 
 ```bash
 uv sync --no-dev --extra cpu   # native equivalent of what the Dockerfile does
+source .venv/bin/activate      # redo this in every new terminal
 ```
 
 ⚠️ No `uv pip install -e .`: the project has no `[build-system]`, only `uv sync` works (otherwise a setuptools build error unrelated to macOS).
+
+⚠️ Without activation (or using `.venv/bin/python` instead of `python3` below), the `python3 scripts/...` commands in this section use the system interpreter and fail with `ModuleNotFoundError: No module named 'lerobot'`.
 
 **Serial ports.** macOS doesn't assign `/dev/ttyACM0`/`ACM1`: each arm shows up as `/dev/cu.usbmodemXXXX`, name varies, no stable order. Automatically identify which port is the follower and which is the leader (by voltage: follower ~12V, leader ~5V) and get copy-paste-ready `export` lines:
 
