@@ -164,6 +164,48 @@ make check-voltage # tension de chaque servo (follower + leader)
 
 ---
 
+## Mode natif macOS (sans Docker)
+
+Testé sur Apple Silicon : lerobot, depthai, opencv et torch (avec MPS) s'installent et s'importent nativement, sans adaptation.
+
+```bash
+uv sync --no-dev --extra cpu   # équivalent natif de ce que fait le Dockerfile
+source .venv/bin/activate      # à refaire dans chaque nouveau terminal
+```
+
+⚠️ Pas de `uv pip install -e .` : le projet n'a pas de `[build-system]`, seul `uv sync` fonctionne (sinon erreur de build setuptools sans rapport avec macOS).
+
+⚠️ Sans l'activation (ou `.venv/bin/python` à la place de `python3` ci-dessous), les commandes `python3 scripts/...` de cette section utilisent l'interpréteur système et échouent avec `ModuleNotFoundError: No module named 'lerobot'`.
+
+**Ports série.** macOS n'attribue pas `/dev/ttyACM0`/`ACM1` : chaque bras apparaît en `/dev/cu.usbmodemXXXX`, nom variable, sans ordre stable. Identifier automatiquement quel port est le follower et lequel est le leader (par la tension : follower ~12V, leader ~5V) et obtenir les `export` à copier-coller :
+
+```bash
+python3 scripts/robot/identify_arms.py
+```
+
+Puis coller les `export` affichés, ou passer les ports explicitement :
+
+```bash
+# commandes lerobot (teleop, calibrate...) :
+--robot.port=/dev/cu.usbmodemXXXX --teleop.port=/dev/cu.usbmodemYYYY
+
+# scripts/robot/check_devices.py et scan_motors.py :
+FOLLOWER_PORT=/dev/cu.usbmodemXXXX LEADER_PORT=/dev/cu.usbmodemYYYY python3 scripts/robot/check_devices.py
+
+# scripts à un seul bras (diag_voltage.py, move_central_position.py...) :
+ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
+```
+
+**`make setup-host`, `make setup-udev`, `make setup-oak` : sans objet sur macOS.** Ce sont des réglages Linux (groupe `dialout`, règles udev). Ils échouent maintenant avec un message explicite au lieu d'une erreur système cryptique : rien à faire à la place, aucune règle système n'est nécessaire sur macOS.
+
+**Caméras.** Webcam USB générique (U20CAM, ET-S231...) : `camera_viewer.py` et les scripts qui réutilisent `V4L2Camera` basculent automatiquement sur le backend caméra par défaut de macOS, rien à changer. OAK-D Lite : fonctionne sans udev, `depthai` détecte le device directement.
+
+⚠️ Au lancement de `lerobot-teleoperate` (et probablement d'autres commandes qui chargent `cv2` et `av`), macOS affiche des messages `objc[...]: Class AVFFrameReceiver is implemented in both ...` qui parlent de « crashes mystérieux ». Sans gravité : `opencv-python` et `av` embarquent chacun leur propre copie de `libavdevice`, d'où le conflit de classes Objective-C signalé. La téléopération tourne normalement derrière (confirmé à 60Hz réels). Rien à corriger de ton côté.
+
+Non testé : Windows/WSL.
+
+---
+
 ## Features
 
 Téléopération leader/follower, enregistrement de datasets pour l'apprentissage par imitation, et rejeu d'un épisode enregistré.
@@ -399,6 +441,48 @@ make check-voltage # voltage of each servo (follower + leader)
 - `make setup-oak` once (udev rule + `/dev/oak` symlink)
 - `make detect-oak` -> should capture an RGB frame to confirm the camera is detected
 - **Never** `import depthai` from the host, **nor** `docker run` (always `docker compose run lerobot-camera ...`): an ephemeral container can leave the device locked
+
+---
+
+## Native macOS mode (no Docker)
+
+Tested on Apple Silicon: lerobot, depthai, opencv and torch (with MPS) install and import natively, no adaptation needed.
+
+```bash
+uv sync --no-dev --extra cpu   # native equivalent of what the Dockerfile does
+source .venv/bin/activate      # redo this in every new terminal
+```
+
+⚠️ No `uv pip install -e .`: the project has no `[build-system]`, only `uv sync` works (otherwise a setuptools build error unrelated to macOS).
+
+⚠️ Without activation (or using `.venv/bin/python` instead of `python3` below), the `python3 scripts/...` commands in this section use the system interpreter and fail with `ModuleNotFoundError: No module named 'lerobot'`.
+
+**Serial ports.** macOS doesn't assign `/dev/ttyACM0`/`ACM1`: each arm shows up as `/dev/cu.usbmodemXXXX`, name varies, no stable order. Automatically identify which port is the follower and which is the leader (by voltage: follower ~12V, leader ~5V) and get copy-paste-ready `export` lines:
+
+```bash
+python3 scripts/robot/identify_arms.py
+```
+
+Then paste the `export` lines it prints, or pass the ports explicitly:
+
+```bash
+# lerobot commands (teleop, calibrate...):
+--robot.port=/dev/cu.usbmodemXXXX --teleop.port=/dev/cu.usbmodemYYYY
+
+# scripts/robot/check_devices.py and scan_motors.py:
+FOLLOWER_PORT=/dev/cu.usbmodemXXXX LEADER_PORT=/dev/cu.usbmodemYYYY python3 scripts/robot/check_devices.py
+
+# single-arm scripts (diag_voltage.py, move_central_position.py...):
+ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
+```
+
+**`make setup-host`, `make setup-udev`, `make setup-oak`: not applicable on macOS.** These are Linux settings (`dialout` group, udev rules). They now fail with an explicit message instead of a cryptic system error: there's nothing to do instead, no system rule is needed on macOS.
+
+**Cameras.** Generic USB webcam (U20CAM, ET-S231...): `camera_viewer.py` and scripts reusing `V4L2Camera` automatically fall back to macOS's default camera backend, nothing to change. OAK-D Lite: works without udev, `depthai` detects the device directly.
+
+⚠️ When starting `lerobot-teleoperate` (and probably other commands that load both `cv2` and `av`), macOS prints `objc[...]: Class AVFFrameReceiver is implemented in both ...` messages warning about "mysterious crashes." Harmless: `opencv-python` and `av` each bundle their own copy of `libavdevice`, hence the Objective-C class conflict. Teleoperation runs fine behind it (confirmed at a real 60Hz). Nothing to fix on your end.
+
+Not tested: Windows/WSL.
 
 ---
 

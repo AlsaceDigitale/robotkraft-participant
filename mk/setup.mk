@@ -1,14 +1,17 @@
 setup-host:
+	@[ "$$(uname)" = "Linux" ] || (echo "setup-host : sans objet sur macOS/Windows (groupe dialout, spécifique Linux). Rien à faire ici." && exit 1)
 	sudo usermod -aG dialout $(USER)
 	@echo "Déconnectez-vous et reconnectez-vous pour appliquer le groupe dialout."
 
 # Crée /dev/lerobot_follower et /dev/lerobot_leader (règles udev stables).
 # À lancer une seule fois, avec les deux bras disponibles.
 setup-udev:
+	@[ "$$(uname)" = "Linux" ] || (echo "setup-udev : sans objet sur macOS/Windows (udev est spécifique Linux). En mode natif macOS, passer le port série directement (/dev/cu.usbmodem*), voir README." && exit 1)
 	bash scripts/shell/setup_udev.sh
 
 # Crée règle udev pour OAK-D Lite (Luxonis/Movidius 03e7) + symlink /dev/oak. À lancer une seule fois.
 setup-oak:
+	@[ "$$(uname)" = "Linux" ] || (echo "setup-oak : sans objet sur macOS/Windows (udev est spécifique Linux). Aucune règle à poser, l'OAK-D Lite est détectée directement par depthai." && exit 1)
 	echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="03e7", MODE="0666", SYMLINK+="oak"' \
 		| sudo tee /etc/udev/rules.d/80-movidius.rules
 	sudo udevadm control --reload-rules && sudo udevadm trigger
