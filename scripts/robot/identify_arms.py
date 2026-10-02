@@ -28,7 +28,7 @@ def read_voltage(port: str) -> float:
     try:
         return bus.read("Present_Voltage", "j1", normalize=False) / 10.0
     finally:
-        bus.disconnect()
+        bus.disconnect(disable_torque=False)  # diagnostic en lecture seule, ne doit pas changer l'état du bras
 
 
 def main():

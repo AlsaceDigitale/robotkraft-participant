@@ -16,6 +16,6 @@ for port, name in [(FOLLOWER_PORT, "follower"), (LEADER_PORT, "leader")]:
         )
         bus.connect()
         print(f"{port} -> {name} OK")
-        bus.disconnect()
+        bus.disconnect(disable_torque=False)  # diagnostic en lecture seule, ne doit pas changer l'état du bras
     except Exception as e:
         print(f"{port} -> {name} ERREUR: {e}")

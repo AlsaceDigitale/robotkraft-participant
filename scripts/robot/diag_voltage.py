@@ -15,4 +15,4 @@ for name in MOTORS:
     v = bus.read("Present_Voltage", name, normalize=False) / 10.0
     print(f"{name:<15} {v:>12.1f}")
 
-bus.disconnect()
+bus.disconnect(disable_torque=False)  # diagnostic en lecture seule, ne doit pas changer l'état du bras
