@@ -1,4 +1,8 @@
-"""Vérifie que chaque port série correspond bien au bras attendu (follower/leader) en tentant une connexion moteur test. Ports par défaut Linux (/dev/ttyACM0/1), surchargeables via FOLLOWER_PORT/LEADER_PORT (macOS : /dev/cu.usbmodem*)"""
+"""Vérifie que chaque port série répond bien (connexion moteur test), PAS que le rôle follower/leader
+affiché est le bon : les deux noms viennent juste de FOLLOWER_PORT/LEADER_PORT (ou des valeurs par
+défaut /dev/ttyACM0/1), rien ne garantit que ça correspond au bras réel. Pour confirmer le rôle réel,
+voir identify_arms.py (classification par tension). Ports par défaut Linux (/dev/ttyACM0/1),
+surchargeables via FOLLOWER_PORT/LEADER_PORT (macOS : /dev/cu.usbmodem*)"""
 
 import os
 
