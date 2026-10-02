@@ -31,6 +31,10 @@ que ce soit qui touche au matériel :
   que lire une valeur (tension, scan de moteurs) sans vouloir relâcher le bras doit passer
   `disable_torque=False` explicitement — sinon le bras tombe en mou à la fin du script,
   même en pleine session active.
+- **Le support caméra n'existe que sur le follower, pas sur le leader.** En téléopération,
+  les deux bras bougent ensemble ; surveiller la position du follower pendant un mouvement
+  (calibration, téléop, script de test) pour ne pas aller en butée ou cogner un objet avec
+  la caméra montée dessus.
 
 ## Caméras
 
