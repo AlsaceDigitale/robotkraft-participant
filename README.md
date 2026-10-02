@@ -205,6 +205,14 @@ ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
 
 Non testé : Windows/WSL.
 
+### Alternative : VM Linux sur Mac (Vagrant + VMware Fusion)
+
+Marche aussi, testé réellement sur Apple Silicon (Fusion 13.5.2, box `bento/ubuntu-24.04` arm64, provider `vmware_desktop`) : `uv sync`, les trois `make setup-*` (qui fonctionnent normalement, contrairement au mode natif macOS ci-dessus), le fallback caméra en V4L2, et les bras branchés en USB passthrough (check-devices, scan-motors, diag-voltage, calibration, téléopération).
+
+Deux points pratiques :
+- Le passthrough USB n'est pas scriptable simplement : il passe par le menu Fusion **Virtual Machine > USB & Bluetooth** (VM démarrée avec fenêtre, pas en mode headless/`nogui`), à faire une fois par device avant de rebrancher.
+- Les fichiers de calibration vivent sur le disque de la VM, pas sur celui du Mac hôte : recalibrer dans la VM même si déjà fait côté macOS natif.
+
 ---
 
 ## Features
@@ -485,6 +493,14 @@ ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
 ⚠️ When starting `lerobot-teleoperate` (and probably other commands that load both `cv2` and `av`), macOS prints `objc[...]: Class AVFFrameReceiver is implemented in both ...` messages warning about "mysterious crashes." Harmless: `opencv-python` and `av` each bundle their own copy of `libavdevice`, hence the Objective-C class conflict. Teleoperation runs fine behind it (confirmed at a real 60Hz). Nothing to fix on your end.
 
 Not tested: Windows/WSL.
+
+### Alternative: Linux VM on a Mac (Vagrant + VMware Fusion)
+
+Also works, tested for real on Apple Silicon (Fusion 13.5.2, `bento/ubuntu-24.04` arm64 box, `vmware_desktop` provider): `uv sync`, all three `make setup-*` targets (which work normally here, unlike native macOS above), the V4L2 camera fallback, and the arms over USB passthrough (check-devices, scan-motors, diag-voltage, calibration, teleoperation).
+
+Two practical points:
+- USB passthrough isn't easily scriptable: it goes through Fusion's **Virtual Machine > USB & Bluetooth** menu (VM started with a window, not headless/`nogui`), once per device before reconnecting.
+- Calibration files live on the VM's disk, not the host Mac's: recalibrate inside the VM even if already done on native macOS.
 
 ---
 
