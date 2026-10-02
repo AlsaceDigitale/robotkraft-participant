@@ -25,6 +25,7 @@ Robotique spatiale/chimie pour hackathon IA & Robotique : bras SO-ARM101 (leader
 
 - Erreur `input voltage error` sous charge (~5,4V) : alimentation insuffisante.
 - Ports `/dev/ttyACM0`/`ACM1` s'attribuent selon l'ordre de branchement (follower en premier = `ACM0`). Vérifier `ls /dev/ttyACM*` avant chaque session.
+- Les deux bras ont le même VID:PID USB (puce WCH), donc indistinguables par ça : en cas de doute sur qui est qui, se fier à la tension (follower 12V, leader 5V), pas au numéro de série ni à l'ordre de branchement. `python3 scripts/robot/identify_arms.py` l'automatise (Linux et macOS).
 
 ---
 
@@ -306,6 +307,7 @@ Space/chemistry robotics for an AI & Robotics hackathon: SO-ARM101 arms (leader/
 
 - `input voltage error` under load (~5.4V): insufficient power.
 - `/dev/ttyACM0`/`ACM1` ports are assigned by plugging order (follower first = `ACM0`). Check `ls /dev/ttyACM*` before each session.
+- Both arms share the same USB VID:PID (WCH chip), so that won't tell them apart: if in doubt about which is which, trust the voltage (follower 12V, leader 5V), not the serial number or plugging order. `python3 scripts/robot/identify_arms.py` automates this (Linux and macOS).
 
 ---
 
