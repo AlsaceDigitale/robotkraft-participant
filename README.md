@@ -174,7 +174,13 @@ uv sync --no-dev --extra cpu   # équivalent natif de ce que fait le Dockerfile
 
 ⚠️ Pas de `uv pip install -e .` : le projet n'a pas de `[build-system]`, seul `uv sync` fonctionne (sinon erreur de build setuptools sans rapport avec macOS).
 
-**Ports série.** macOS n'attribue pas `/dev/ttyACM0`/`ACM1` : chaque bras apparaît en `/dev/cu.usbmodemXXXX`, nom variable, sans ordre stable. Lister les deux appareils (`ls /dev/cu.usbmodem*`), puis passer les ports explicitement :
+**Ports série.** macOS n'attribue pas `/dev/ttyACM0`/`ACM1` : chaque bras apparaît en `/dev/cu.usbmodemXXXX`, nom variable, sans ordre stable. Identifier automatiquement quel port est le follower et lequel est le leader (par la tension : follower ~12V, leader ~5V) et obtenir les `export` à copier-coller :
+
+```bash
+python3 scripts/robot/identify_arms.py
+```
+
+Puis coller les `export` affichés, ou passer les ports explicitement :
 
 ```bash
 # commandes lerobot (teleop, calibrate...) :
@@ -226,6 +232,7 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | `make calibrate-follower` / `make calibrate-leader` | Calibration d'un bras (une fois) |
 | `make check-devices` | Vérifie `ACM0`=follower, `ACM1`=leader |
 | `make scan-motors` | Liste les IDs des servo-moteurs |
+| `make identify-arms` | Identifie follower/leader par tension, affiche les `export` de ports à copier-coller |
 | `make check-voltage` | Tension des servos (follower + leader) |
 | `make check-voltage-follower` / `make check-voltage-leader` | Tension d'un seul bras |
 | `make check-oak` | Vérifie que la caméra OAK-D est bien détectée par l'hôte |
@@ -443,7 +450,13 @@ uv sync --no-dev --extra cpu   # native equivalent of what the Dockerfile does
 
 ⚠️ No `uv pip install -e .`: the project has no `[build-system]`, only `uv sync` works (otherwise a setuptools build error unrelated to macOS).
 
-**Serial ports.** macOS doesn't assign `/dev/ttyACM0`/`ACM1`: each arm shows up as `/dev/cu.usbmodemXXXX`, name varies, no stable order. List both devices (`ls /dev/cu.usbmodem*`), then pass the ports explicitly:
+**Serial ports.** macOS doesn't assign `/dev/ttyACM0`/`ACM1`: each arm shows up as `/dev/cu.usbmodemXXXX`, name varies, no stable order. Automatically identify which port is the follower and which is the leader (by voltage: follower ~12V, leader ~5V) and get copy-paste-ready `export` lines:
+
+```bash
+python3 scripts/robot/identify_arms.py
+```
+
+Then paste the `export` lines it prints, or pass the ports explicitly:
 
 ```bash
 # lerobot commands (teleop, calibrate...):
@@ -495,6 +508,7 @@ All commands are `make <target>`. The root Makefile includes `mk/{setup,robot,da
 | `make calibrate-follower` / `make calibrate-leader` | Calibrates one arm (once) |
 | `make check-devices` | Checks `ACM0`=follower, `ACM1`=leader |
 | `make scan-motors` | Lists the servo motor IDs |
+| `make identify-arms` | Identifies follower/leader by voltage, prints copy-paste-ready port `export` lines |
 | `make check-voltage` | Voltage of the servos (follower + leader) |
 | `make check-voltage-follower` / `make check-voltage-leader` | Voltage of a single arm |
 | `make check-oak` | Checks that the OAK-D camera is detected by the host |

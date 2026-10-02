@@ -31,6 +31,10 @@ check-devices:
 scan-motors:
 	docker compose run --rm lerobot python3 scripts/robot/scan_motors.py
 
+# Identifie follower/leader par tension et affiche les export FOLLOWER_PORT/LEADER_PORT/ROBOT_PORT à copier-coller
+identify-arms:
+	docker compose run --rm lerobot python3 scripts/robot/identify_arms.py
+
 # Vérifie le voltage de chaque servo (un bras à la fois, sans symlink udev)
 check-voltage-follower:
 	docker compose run --rm -e ROBOT_PORT=/dev/ttyACM0 lerobot-follower python3 scripts/robot/diag_voltage.py
