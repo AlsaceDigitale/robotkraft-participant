@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Identifie quel bras (follower/leader) est branché sur quel port série, par la tension
 mesurée (follower ~12V, leader ~5V), et affiche les `export` prêts à copier-coller."""
 
