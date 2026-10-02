@@ -191,3 +191,48 @@ class OAKCamera:
 
     def __exit__(self, *args):
         self.release()
+
+
+def live_view(cap, win_title, max_consecutive_misses=1):
+    """Boucle d'affichage OpenCV générique : fenêtre + overlay résolution/fps réel, Q/Echap pour
+    quitter. cap doit exposer .read() -> (bool, frame) et .release() (interface cv2.VideoCapture).
+    max_consecutive_misses tolère un nombre de lectures vides d'affilée avant de conclure à une
+    vraie coupure (utile si la source a un délai de démarrage, ex. warm-up d'un flux ZMQ)."""
+    cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(win_title, 1280, 720)
+
+    n = 0
+    t_fps = time.time()
+    fps_disp = 0.0
+    consecutive_misses = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            consecutive_misses += 1
+            if consecutive_misses >= max_consecutive_misses:
+                print("Erreur: frame vide", file=sys.stderr)
+                break
+            continue
+        consecutive_misses = 0
+
+        n += 1
+        elapsed = time.time() - t_fps
+        if elapsed >= 1.0:
+            fps_disp = n / elapsed
+            n = 0
+            t_fps = time.time()
+
+        h, w = frame.shape[:2]
+        info = f"{w}x{h}  {fps_disp:.1f} fps  (Q=quitter)"
+        cv2.putText(frame, info, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+        cv2.imshow(win_title, frame)
+
+        key = cv2.waitKey(1) & 0xFF
+        if key in (ord("q"), 27):
+            break
+        if cv2.getWindowProperty(win_title, cv2.WND_PROP_VISIBLE) < 1:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
