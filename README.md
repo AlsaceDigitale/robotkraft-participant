@@ -235,7 +235,6 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 | `make calibrate-follower` / `make calibrate-leader` | Calibration d'un bras (une fois) |
 | `make check-devices` | Vérifie `ACM0`=follower, `ACM1`=leader |
 | `make scan-motors` | Liste les IDs des servo-moteurs |
-| `make identify-arms` | Identifie follower/leader par tension, affiche les `export` de ports à copier-coller |
 | `make check-voltage` | Tension des servos (follower + leader) |
 | `make check-voltage-follower` / `make check-voltage-leader` | Tension d'un seul bras |
 | `make check-oak` | Vérifie que la caméra OAK-D est bien détectée par l'hôte |
@@ -514,7 +513,6 @@ All commands are `make <target>`. The root Makefile includes `mk/{setup,robot,da
 | `make calibrate-follower` / `make calibrate-leader` | Calibrates one arm (once) |
 | `make check-devices` | Checks `ACM0`=follower, `ACM1`=leader |
 | `make scan-motors` | Lists the servo motor IDs |
-| `make identify-arms` | Identifies follower/leader by voltage, prints copy-paste-ready port `export` lines |
 | `make check-voltage` | Voltage of the servos (follower + leader) |
 | `make check-voltage-follower` / `make check-voltage-leader` | Voltage of a single arm |
 | `make check-oak` | Checks that the OAK-D camera is detected by the host |
