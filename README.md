@@ -211,7 +211,7 @@ Marche aussi, testé réellement sur Apple Silicon (Fusion 13.5.2, box `bento/ub
 
 Deux points pratiques :
 - Le passthrough USB n'est pas scriptable simplement : il passe par le menu Fusion **Virtual Machine > USB & Bluetooth** (VM démarrée avec fenêtre, pas en mode headless/`nogui`), à faire une fois par device avant de rebrancher.
-- Les fichiers de calibration vivent sur le disque de la VM, pas sur celui du Mac hôte : recalibrer dans la VM même si déjà fait côté macOS natif.
+- Les fichiers de calibration vivent sur le disque de la VM, pas sur celui du Mac hôte : pas besoin de recalibrer si déjà fait côté macOS natif, un `scp` des deux `.json` (`~/.cache/huggingface/lerobot/calibration/{robots/so_follower,teleoperators/so_leader}/*.json`) vers la VM suffit, mêmes valeurs.
 
 ---
 
@@ -500,7 +500,7 @@ Also works, tested for real on Apple Silicon (Fusion 13.5.2, `bento/ubuntu-24.04
 
 Two practical points:
 - USB passthrough isn't easily scriptable: it goes through Fusion's **Virtual Machine > USB & Bluetooth** menu (VM started with a window, not headless/`nogui`), once per device before reconnecting.
-- Calibration files live on the VM's disk, not the host Mac's: recalibrate inside the VM even if already done on native macOS.
+- Calibration files live on the VM's disk, not the host Mac's: no need to recalibrate if already done on native macOS, `scp`-ing the two `.json` files (`~/.cache/huggingface/lerobot/calibration/{robots/so_follower,teleoperators/so_leader}/*.json`) to the VM is enough, same values.
 
 ---
 
