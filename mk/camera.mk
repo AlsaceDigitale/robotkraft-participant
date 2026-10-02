@@ -30,3 +30,12 @@ photo:
 calibrate-wb:
 	xhost +local:docker
 	docker compose run --rm -e DISPLAY=$(DISPLAY) -v /tmp/.X11-unix:/tmp/.X11-unix lerobot-camera bash scripts/shell/calibrate_with_oak.sh calibrate_wb.py
+
+# Preview live OAK-D Lite (dans le container, via X11 ; lance oak_zmq_server.py puis le viewer)
+# Usage : make view-oak [WIDTH=640 HEIGHT=480 FPS=30]
+view-oak:
+	xhost +local:docker
+	docker compose run --rm \
+		-e DISPLAY=$(DISPLAY) -v /tmp/.X11-unix:/tmp/.X11-unix \
+		-e WIDTH=$(or $(WIDTH),1920) -e HEIGHT=$(or $(HEIGHT),1080) -e FPS=$(or $(FPS),30) \
+		lerobot-camera bash scripts/shell/calibrate_with_oak.sh oak_viewer.py

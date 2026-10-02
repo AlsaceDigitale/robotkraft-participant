@@ -161,7 +161,9 @@ make check-voltage # tension de chaque servo (follower + leader)
 - **USB3 obligatoire**
 - `make setup-oak` une seule fois (règle udev + symlink `/dev/oak`)
 - `make detect-oak` -> doit capturer un frame RGB pour valider la détection de la caméra
+- `make view-oak [WIDTH=640 HEIGHT=480 FPS=30]` -> preview live (fenêtre X11), `Q`/Échap pour quitter
 - **Ne jamais** `import depthai` depuis l'hôte, **ni** `docker run` (toujours `docker compose run lerobot-camera ...`) : un container éphémère peut garder le device verrouillé
+- En mode natif (sans Docker, cf. section dédiée) : deux terminaux, `WIDTH=640 HEIGHT=480 python3 scripts/camera/oak_zmq_server.py` puis `python3 scripts/camera/oak_viewer.py`
 
 ---
 
@@ -274,6 +276,7 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 |----------|-------------|
 | `make detect-cameras` | Détection des caméras USB disponibles (U20CAM, ET-S231 et autres UVC) |
 | `make detect-oak` | Détection caméra OAK-D Lite (option) |
+| `make view-oak` | Preview live OAK-D Lite (fenêtre X11), `Q`/Échap pour quitter |
 | `make calibrate-wb` | Calibration de la balance des blancs |
 | `make view-camera DEVICE=/dev/video2` | Preview live webcam USB (U20CAM, ET-S231 et autres UVC), exécuté sur l'hôte |
 | `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Capture une photo |
@@ -450,7 +453,9 @@ make check-voltage # voltage of each servo (follower + leader)
 - **USB3 required**
 - `make setup-oak` once (udev rule + `/dev/oak` symlink)
 - `make detect-oak` -> should capture an RGB frame to confirm the camera is detected
+- `make view-oak [WIDTH=640 HEIGHT=480 FPS=30]` -> live preview (X11 window), `Q`/Esc to quit
 - **Never** `import depthai` from the host, **nor** `docker run` (always `docker compose run lerobot-camera ...`): an ephemeral container can leave the device locked
+- Native mode (no Docker, see dedicated section): two terminals, `WIDTH=640 HEIGHT=480 python3 scripts/camera/oak_zmq_server.py` then `python3 scripts/camera/oak_viewer.py`
 
 ---
 
@@ -563,6 +568,7 @@ All commands are `make <target>`. The root Makefile includes `mk/{setup,robot,da
 |----------|-------------|
 | `make detect-cameras` | Detects the available USB cameras (U20CAM, ET-S231 and other UVC) |
 | `make detect-oak` | Detects the OAK-D Lite camera (optional) |
+| `make view-oak` | Live OAK-D Lite preview (X11 window), `Q`/Esc to quit |
 | `make calibrate-wb` | White balance calibration |
 | `make view-camera DEVICE=/dev/video2` | Live preview of a USB webcam (U20CAM, ET-S231 and other UVC), runs on the host |
 | `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Takes a photo |
