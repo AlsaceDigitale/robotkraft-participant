@@ -184,7 +184,7 @@ uv sync --no-dev --extra cpu   # équivalent natif de ce que fait le Dockerfile
 FOLLOWER_PORT=/dev/cu.usbmodemXXXX LEADER_PORT=/dev/cu.usbmodemYYYY python3 scripts/robot/check_devices.py
 
 # scripts à un seul bras (diag_voltage.py, move_central_position.py...) :
-ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/scan_motors.py
+ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
 ```
 
 **`make setup-host`, `make setup-udev`, `make setup-oak` : sans objet sur macOS.** Ce sont des réglages Linux (groupe `dialout`, règles udev). Ils échouent maintenant avec un message explicite au lieu d'une erreur système cryptique : rien à faire à la place, aucune règle système n'est nécessaire sur macOS.
@@ -453,7 +453,7 @@ uv sync --no-dev --extra cpu   # native equivalent of what the Dockerfile does
 FOLLOWER_PORT=/dev/cu.usbmodemXXXX LEADER_PORT=/dev/cu.usbmodemYYYY python3 scripts/robot/check_devices.py
 
 # single-arm scripts (diag_voltage.py, move_central_position.py...):
-ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/scan_motors.py
+ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
 ```
 
 **`make setup-host`, `make setup-udev`, `make setup-oak`: not applicable on macOS.** These are Linux settings (`dialout` group, udev rules). They now fail with an explicit message instead of a cryptic system error: there's nothing to do instead, no system rule is needed on macOS.
