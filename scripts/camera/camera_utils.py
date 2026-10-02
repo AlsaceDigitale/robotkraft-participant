@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 import time
 
 import cv2
@@ -82,7 +83,9 @@ class ZMQCamera:
 
 
 class V4L2Camera:
-    """Webcam USB générique (ET-S231 et similaires) via V4L2/OpenCV. drop-in pour cv2.VideoCapture"""
+    """Webcam USB générique (ET-S231 et similaires) via OpenCV. drop-in pour cv2.VideoCapture.
+    V4L2 (/dev/videoN) sous Linux ; backend par défaut sous macOS/Windows, où /dev/videoN
+    n'existe pas (N réutilisé comme index de caméra, à ajuster si ce n'est pas la bonne)."""
 
     def __init__(self, device="/dev/video0", width=1920, height=1080, fps=30, fourcc="MJPG"):
         self.device = device
@@ -93,7 +96,12 @@ class V4L2Camera:
         self._cap = None
 
     def open(self):
-        self._cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
+        device, backend = self.device, cv2.CAP_V4L2
+        if not sys.platform.startswith("linux"):
+            backend = cv2.CAP_ANY
+            if isinstance(device, str) and device.startswith("/dev/video"):
+                device = int(device.removeprefix("/dev/video"))
+        self._cap = cv2.VideoCapture(device, backend)
         self._cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*self.fourcc))
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
