@@ -1,6 +1,8 @@
-"""OAK-D Lite -> ZMQ bridge pour lerobot-record (type: zmq, camera_name: top)"""
+"""OAK-D Lite -> ZMQ bridge pour lerobot-record (type: zmq, camera_name: top).
+Résolution/fps réglables via WIDTH/HEIGHT/FPS (ex: WIDTH=300 HEIGHT=300 python3 oak_zmq_server.py)"""
 import base64
 import json
+import os
 import sys
 import time
 
@@ -10,7 +12,9 @@ import zmq
 
 CAMERA_NAME = "top"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 5555
-WIDTH, HEIGHT, FPS = 1920, 1080, 30
+WIDTH = int(os.environ.get("WIDTH", "1920"))
+HEIGHT = int(os.environ.get("HEIGHT", "1080"))
+FPS = int(os.environ.get("FPS", "30"))
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
