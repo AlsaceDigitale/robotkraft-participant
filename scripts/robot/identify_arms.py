@@ -52,10 +52,12 @@ def main():
         print("\nIdentification incomplète (un seul bras détecté ou tensions ambiguës), vérifie les branchements.")
         return
 
-    print("\nÀ copier-coller :")
+    # Pas de commentaire inline sur les lignes export : un copier-coller multi-lignes
+    # bloc des trois lignes d'un coup fait planter zsh dessus ("bad pattern: #").
+    print("\nÀ copier-coller (ROBOT_PORT = follower, pour les scripts à un seul bras) :")
     print(f"export FOLLOWER_PORT={found['follower']}")
     print(f"export LEADER_PORT={found['leader']}")
-    print(f"export ROBOT_PORT={found['follower']}  # scripts à un seul bras (diag_voltage.py, move_central_position.py)")
+    print(f"export ROBOT_PORT={found['follower']}")
 
 
 if __name__ == "__main__":

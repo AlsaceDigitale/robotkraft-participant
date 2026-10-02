@@ -200,6 +200,8 @@ ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
 
 **Caméras.** Webcam USB générique (U20CAM, ET-S231...) : `camera_viewer.py` et les scripts qui réutilisent `V4L2Camera` basculent automatiquement sur le backend caméra par défaut de macOS, rien à changer. OAK-D Lite : fonctionne sans udev, `depthai` détecte le device directement.
 
+⚠️ Au lancement de `lerobot-teleoperate` (et probablement d'autres commandes qui chargent `cv2` et `av`), macOS affiche des messages `objc[...]: Class AVFFrameReceiver is implemented in both ...` qui parlent de « crashes mystérieux ». Sans gravité : `opencv-python` et `av` embarquent chacun leur propre copie de `libavdevice`, d'où le conflit de classes Objective-C signalé. La téléopération tourne normalement derrière (confirmé à 60Hz réels). Rien à corriger de ton côté.
+
 Non testé : Windows/WSL.
 
 ---
@@ -477,6 +479,8 @@ ROBOT_PORT=/dev/cu.usbmodemXXXX python3 scripts/robot/diag_voltage.py
 **`make setup-host`, `make setup-udev`, `make setup-oak`: not applicable on macOS.** These are Linux settings (`dialout` group, udev rules). They now fail with an explicit message instead of a cryptic system error: there's nothing to do instead, no system rule is needed on macOS.
 
 **Cameras.** Generic USB webcam (U20CAM, ET-S231...): `camera_viewer.py` and scripts reusing `V4L2Camera` automatically fall back to macOS's default camera backend, nothing to change. OAK-D Lite: works without udev, `depthai` detects the device directly.
+
+⚠️ When starting `lerobot-teleoperate` (and probably other commands that load both `cv2` and `av`), macOS prints `objc[...]: Class AVFFrameReceiver is implemented in both ...` messages warning about "mysterious crashes." Harmless: `opencv-python` and `av` each bundle their own copy of `libavdevice`, hence the Objective-C class conflict. Teleoperation runs fine behind it (confirmed at a real 60Hz). Nothing to fix on your end.
 
 Not tested: Windows/WSL.
 
