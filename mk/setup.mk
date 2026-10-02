@@ -55,4 +55,6 @@ use-cpu:
 # Dit quelle variante est reellement active et si torch voit un GPU
 which-image:
 	@echo "image : $${ROBOTKRAFT_IMAGE:-$$(grep -E '^ROBOTKRAFT_IMAGE=' .env 2>/dev/null | cut -d= -f2- || echo 'ghcr.io/alsacedigitale/robotkraft:latest (defaut)')}"
-	@docker compose run --rm lerobot-base python3 -c "import torch; print('torch :', torch.__version__); print('GPU vu par torch :', torch.cuda.is_available())" 2>/dev/null || echo "(image non tiree)"
+	@docker compose run --rm lerobot-gpu python3 -c "import torch; print('torch :', torch.__version__); print('GPU vu par torch :', torch.cuda.is_available())" 2>/dev/null \
+		|| docker compose run --rm lerobot-base python3 -c "import torch; print('torch :', torch.__version__); print('GPU vu par torch :', torch.cuda.is_available())" 2>/dev/null \
+		|| echo "(image non tiree)"
