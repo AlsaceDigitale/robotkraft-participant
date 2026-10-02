@@ -233,3 +233,240 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 
 Pendant l'événement, le canal d'entraide et le contact de l'organisation vous sont
 communiqués séparément.
+
+---
+
+*The French content above is the reference. English content below.*
+
+# RobotKraft, participant edition
+
+> Technical base for the RobotKraft challenge: ready-to-use Docker environment, arm and camera
+> detection, hardware diagnostics, and shortcuts to the LeRobot commands (teleoperation, dataset
+> recording, training, local or remote-GPU evaluation).
+>
+> Perception and strategy are not provided: that's what the challenge evaluates, it's up to you
+> to write them.
+>
+> Information specific to each edition (venue, schedule, rules, challenges, help channel) is
+> shared separately.
+
+Space/chemistry robotics for an AI & Robotics hackathon: SO-ARM101 arms (leader/follower), imitation learning with [LeRobot](https://huggingface.co/docs/lerobot), all containerized under Docker.
+
+---
+
+## Safety: plugging order
+
+⚠️ Two mistakes destroy hardware.
+
+**Power first, USB second.** If USB is plugged in before power, the USB port ends up powering the board and can burn out. Order: power, then follower USB, then leader USB. To unplug, the exact reverse.
+
+**Each arm has its own voltage, and the connectors are interchangeable.** Follower 12V, leader 5V. Putting 12V into a leader destroys it. Color coding: green = 5V = leader, white = 12V = follower. Green wire to green wire, white wire to white wire.
+
+- `input voltage error` under load (~5.4V): insufficient power.
+- `/dev/ttyACM0`/`ACM1` ports are assigned by plugging order (follower first = `ACM0`). Check `ls /dev/ttyACM*` before each session.
+
+---
+
+## Architecture
+
+| Component               |
+|-------------------------|
+| SO-ARM101               |
+| LeRobot (HuggingFace)   |
+| Wrist camera: InnoMaker U20CAM or ET-S231 depending on the station (both USB UVC) |
+| Scene camera (optional, 11 available on site): OAK-D Lite (depthai) |
+| Python 3.12.9 + uv      |
+| Docker                  |
+
+---
+
+## Docker services
+
+| Service |
+|---------|
+| `lerobot-base` |
+| `lerobot` |
+| `lerobot-gpu` |
+| `lerobot-follower` |
+| `lerobot-leader` |
+| `lerobot-camera` |
+
+> `lerobot` requires both `/dev/lerobot_follower` **and** `/dev/lerobot_leader`. Only one arm plugged in: use `lerobot-follower` / `lerobot-leader` (they mount `/dev/ttyACM0`/`ACM1`, no udev symlink).
+
+---
+
+## Prerequisites
+
+- [Docker](https://www.docker.com/)
+- `HF_TOKEN` in `.env` (see `.env.example`) to push/pull HuggingFace datasets and checkpoints (get one via Access Token > Create New Token on the HuggingFace site)
+
+---
+
+## Installation
+
+The image is ready, there's nothing to build. Pull it rather than building it, you'll save
+about twenty minutes and the venue's bandwidth:
+
+```bash
+docker compose pull      # pulls the image from ghcr.io
+```
+
+**Do this at home before coming.** The image weighs about 2.7 GB, and dozens of simultaneous
+downloads on the venue's connection is not a good idea.
+
+If your laptop has an NVIDIA GPU and you want to train locally, switch to the CUDA
+variant (about 9 GB):
+
+```bash
+make use-cuda            # writes the choice to .env, so it persists
+docker compose pull
+make which-image         # check: should print GPU vu par torch : True
+```
+
+Otherwise, training happens on the remote GPU servers, and the default variant is enough.
+`make use-cpu` switches back.
+
+⚠️ Don't pass `ROBOTKRAFT_IMAGE=...` directly in front of a command: the value only applies
+to that one command, and `make train` would silently fall back to the CPU variant, training
+on the processor without warning.
+
+### Set up your machine, required even if you pull the image
+
+These three commands configure your system, not the image. Without them, the arms and the
+camera won't be visible from the containers.
+
+```bash
+make setup-host # dialout group (log out and back in right after)
+make setup-udev # udev rules and /dev/lerobot_follower / _leader symlinks
+make setup-oak  # udev rule for the OAK-D Lite camera (once)
+```
+
+Also copy the configuration file:
+
+```bash
+cp .env.example .env    # then fill in HF_TOKEN
+```
+
+### Rebuild the image, only if you change the Dockerfile or the dependencies
+
+```bash
+make build
+```
+
+### ⛔ Don't reconfigure the servo motors
+
+The servo IDs are **already set on the arms you're being lent**, and the whole chain depends
+on them. Redefining them breaks the arm for you and for the next team using it, and it then
+has to be reconfigured servo by servo.
+
+**Never run `lerobot-setup-motors`, or any motor ID configuration command.** If a servo seems
+silent or mis-numbered, it's not for you to fix: go find a coach.
+
+To check that the servos respond, without changing anything:
+
+```bash
+make scan-motors    # lists the IDs seen on the bus
+make check-voltage  # voltage of each servo
+```
+
+### Calibrating the robots
+
+```bash
+make calibrate-follower # Follower calibration (once)
+make calibrate-leader   # Leader calibration (once)
+```
+
+> Calibrations are stored in `.cache/` (Docker volume). To recalibrate: delete the matching `.json` file in `.cache/huggingface/lerobot/calibration/`.
+
+### Post-installation check
+
+```bash
+ls /dev/ttyACM*    # follower/leader detected
+make check-devices # checks ACM0=follower, ACM1=leader
+make check-voltage # voltage of each servo (follower + leader)
+```
+
+### Wrist camera: InnoMaker U20CAM or ET-S231 depending on the station
+
+- Standard USB UVC camera (U20CAM on kits 1-8, ET-S231 built in on kits 9-11), no udev rule needed
+- `make detect-cameras` -> lists the USB cameras available in the container
+- `make view-camera DEVICE=/dev/videoX` -> live preview on the host, to find the right device
+- ET-S231 (kits 9-11): MANUAL focus, via the lens ring. Before recording demonstrations, check in a camera preview (`make view-camera DEVICE=/dev/videoX` on Linux, or the system's camera app on macOS/Windows) that the image is sharp at the distance where the arm picks up objects, then don't touch the ring again: a setting that drifts mid-way makes your training data inconsistent.
+
+### Scene camera (optional, 11 available on site): OAK-D Lite
+
+- **USB3 required**
+- `make setup-oak` once (udev rule + `/dev/oak` symlink)
+- `make detect-oak` -> should capture an RGB frame to confirm the camera is detected
+- **Never** `import depthai` from the host, **nor** `docker run` (always `docker compose run lerobot-camera ...`): an ephemeral container can leave the device locked
+
+---
+
+## Features
+
+Leader/follower teleoperation, dataset recording for imitation learning, and replay of a recorded episode.
+
+On the training side: ACT / SmolVLA / π0 policies, on local or remote GPU. Evaluation can run locally (robot + policy on the same machine) or remotely, with the policy served over an inference server while the robot and camera stay local.
+
+---
+
+## Commands
+
+All commands are `make <target>`. The root Makefile includes `mk/{setup,robot,dataset,camera}.mk`, each target lives in the file matching its domain.
+
+### Setup / image
+
+| Command | Description |
+|----------|-------------|
+| `make build` | Builds the `robotkraft:latest` Docker image |
+| `make shell` | Shell into `lerobot-base` (no robot) |
+| `make lock` | Regenerates `uv.lock` |
+| `make setup-host` | Adds the user to the `dialout` group |
+| `make setup-udev` | Creates `/dev/lerobot_follower` + `/dev/lerobot_leader` |
+| `make setup-oak` | Creates the OAK-D Lite udev rule (`/dev/oak`) |
+
+### Teleoperation / calibration / diagnostics
+
+| Command | Description |
+|----------|-------------|
+| `make teleop` | Live leader/follower teleoperation |
+| `make calibrate-follower` / `make calibrate-leader` | Calibrates one arm (once) |
+| `make check-devices` | Checks `ACM0`=follower, `ACM1`=leader |
+| `make scan-motors` | Lists the servo motor IDs |
+| `make check-voltage` | Voltage of the servos (follower + leader) |
+| `make check-voltage-follower` / `make check-voltage-leader` | Voltage of a single arm |
+| `make check-oak` | Checks that the OAK-D camera is detected by the host |
+| `make script-follower FILE=...` / `make script-leader FILE=...` | Runs a Python script with direct access to a single arm |
+
+### Recording / replay
+
+| Command | Description |
+|----------|-------------|
+| `make record HF_USER=... TASK=...` | Records a teleoperation dataset (`[NUM_EPISODES]`, `[EPISODE_TIME]`, `[RESET_TIME]`, `[RESUME]`) |
+| `make replay-episode HF_USER=... TASK=... [EPISODE=0]` | Replays an episode from a recorded dataset (follower only) |
+
+### Training / evaluation
+
+| Command | Description |
+|----------|-------------|
+| `make train HF_USER=... TASK=...` | Trains an ACT policy (local GPU) |
+| `make eval TASK=... [HF_USER=...] [CHECKPOINT=last]` | Evaluates a policy on the real robot, local inference |
+| `make push-checkpoint HF_USER=... TASK=...` | Pushes a trained checkpoint to the HF Hub (required before `eval-remote`) |
+| `make policy-server` | Starts the local inference server |
+| `make eval-remote HF_USER=... TASK=... SERVER=ip:port` | Evaluates with the policy on a remote GPU, robot + camera local |
+
+### Vision / camera
+
+| Command | Description |
+|----------|-------------|
+| `make detect-cameras` | Detects the available USB cameras (U20CAM, ET-S231 and other UVC) |
+| `make detect-oak` | Detects the OAK-D Lite camera (optional) |
+| `make calibrate-wb` | White balance calibration |
+| `make view-camera DEVICE=/dev/video2` | Live preview of a USB webcam (U20CAM, ET-S231 and other UVC), runs on the host |
+| `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Takes a photo |
+
+---
+
+## Stuck?
+
+During the event, the help channel and the organization's contact are shared separately.
