@@ -84,6 +84,7 @@ class RecepteurConsigne:
         self._callback = None
         self._connecte = threading.Event()
         self._erreur_connexion = None
+        self._mid_abonnement = None
 
         self._hote = HOTE_WS if transport == "websockets" else HOTE_TCP
         self._port = PORT_WS if transport == "websockets" else PORT_TCP
@@ -96,6 +97,7 @@ class RecepteurConsigne:
         self._client.reconnect_delay_set(min_delay=1, max_delay=30)
         self._client.on_connect = self._on_connect
         self._client.on_disconnect = self._on_disconnect
+        self._client.on_subscribe = self._on_subscribe
         self._client.on_message = self._on_message
 
     def sur_consigne(self, callback):
@@ -103,8 +105,13 @@ class RecepteurConsigne:
         self._callback = callback
 
     def connecter(self, timeout=10):
-        """Se connecte au broker et attend la confirmation. Lève ErreurMQTT si le réseau
-        ou les identifiants posent problème, plutôt qu'une exception brute de paho-mqtt."""
+        """Se connecte au broker et attend la confirmation (CONNACK + abonnement accepté).
+        Lève ErreurMQTT si le réseau, les identifiants ou l'abonnement posent problème,
+        plutôt qu'une exception brute de paho-mqtt."""
+        # Repart à zéro à chaque appel : sinon un connecter() après un échec, ou après
+        # arreter(), réutiliserait l'état (succès ou erreur) de la tentative précédente.
+        self._connecte.clear()
+        self._erreur_connexion = None
         try:
             self._client.connect(self._hote, self._port, keepalive=60)
         except Exception as e:
@@ -147,12 +154,35 @@ class RecepteurConsigne:
             self._connecte.set()
             client.disconnect()  # pas de ré-essai en boucle sur un mot de passe faux
             return
-        client.subscribe(self._topic)
-        self._connecte.set()
+        # Pas de self._connecte.set() ici : subscribe() ne fait qu'envoyer la demande,
+        # c'est on_subscribe (SUBACK) qui confirme qu'on est vraiment prêt à recevoir.
+        result, mid = client.subscribe(self._topic)
+        if result != mqtt.MQTT_ERR_SUCCESS:
+            self._erreur_connexion = ErreurMQTT(f"Échec de l'abonnement à {self._topic} (code {result}).")
+            self._connecte.set()
+            return
+        self._mid_abonnement = mid
 
     def _on_disconnect(self, client, userdata, disconnect_flags, reason_code, properties):
         if reason_code.is_failure and self._erreur_connexion is None:
             print("[robotkraft_mqtt] Connexion perdue, reconnexion automatique en cours...", file=sys.stderr)
+
+    def _on_subscribe(self, client, userdata, mid, reason_code_list, properties):
+        if mid != self._mid_abonnement:
+            return  # SUBACK d'un abonnement précédent (reconnexion déjà remplacée), ignoré
+        echec = [rc for rc in reason_code_list if rc.is_failure]
+        if echec:
+            erreur = ErreurMQTT(
+                f"Abonnement à {self._topic} refusé par le broker : "
+                f"{', '.join(str(rc) for rc in echec)}."
+            )
+            if self._connecte.is_set():
+                # Reconnexion en cours de session : connecter() a déjà rendu la main,
+                # personne ne lira plus _erreur_connexion, on se contente de signaler.
+                print(f"[robotkraft_mqtt] {erreur}", file=sys.stderr)
+            else:
+                self._erreur_connexion = erreur
+        self._connecte.set()
 
     def _on_message(self, client, userdata, msg):
         # Un plantage ici tuerait le thread réseau de paho (reconnexion comprise) : toute
