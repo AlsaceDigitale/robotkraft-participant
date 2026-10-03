@@ -17,6 +17,8 @@ PORT_TCP = 443  # MQTT sur TLS, port 443 (pas 8883) pour passer les WiFi d'évè
 HOTE_WS = "mqtt-ws.teleport.francsducloud.wtf"
 PORT_WS = 443  # wss, repli si le port TCP ci-dessus est bloqué sur le réseau du lieu
 
+_CHAMPS_REQUIS = ("epreuve", "variante", "id", "consigne")  # format imposé par l'organisation
+
 
 class ErreurMQTT(Exception):
     """Levée pour toute erreur de connexion/configuration compréhensible par un participant
@@ -153,20 +155,35 @@ class RecepteurConsigne:
             print("[robotkraft_mqtt] Connexion perdue, reconnexion automatique en cours...", file=sys.stderr)
 
     def _on_message(self, client, userdata, msg):
+        # Un plantage ici tuerait le thread réseau de paho (reconnexion comprise) : toute
+        # cette méthode doit donc rester incassable, même sur un message mal formé ou une
+        # callback participant qui lève une exception.
         try:
             message = json.loads(msg.payload.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
             print(f"[robotkraft_mqtt] Message illisible sur {msg.topic}, ignoré : {e}", file=sys.stderr)
             return
-        id_message = message.get("id")
-        if id_message is None:
-            print(f"[robotkraft_mqtt] Message sans champ 'id' sur {msg.topic}, ignoré.", file=sys.stderr)
+        if not isinstance(message, dict) or any(c not in message for c in _CHAMPS_REQUIS):
+            print(
+                f"[robotkraft_mqtt] Message incomplet sur {msg.topic} (attendu : "
+                f"{', '.join(_CHAMPS_REQUIS)}), ignoré.",
+                file=sys.stderr,
+            )
             return
+        id_message = message["id"]
+        if not isinstance(id_message, (str, int, float)):
+            print(f"[robotkraft_mqtt] Champ 'id' inexploitable sur {msg.topic}, ignoré.", file=sys.stderr)
+            return
+        # Validation faite avant le dédoublonnage : un message incomplet ne doit pas
+        # "consommer" l'id et bloquer la version corrigée qui arriverait avec le même id.
         if not self._dedup.est_nouvelle(id_message):
             return  # déjà vu (rejoué par retain), on ignore silencieusement
         self._queue.put(message)
         if self._callback is not None:
-            self._callback(message)
+            try:
+                self._callback(message)
+            except Exception as e:
+                print(f"[robotkraft_mqtt] Erreur dans la callback sur_consigne, ignorée : {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
