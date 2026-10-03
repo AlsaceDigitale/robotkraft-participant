@@ -191,10 +191,12 @@ class InstructionReceiver:
         # participant callback that raises.
         try:
             message = json.loads(msg.payload.decode("utf-8"))
-        except (UnicodeDecodeError, ValueError) as e:
-            # ValueError covers json.JSONDecodeError AND cases like an oversized integer
-            # (Python 3.12's int<->str conversion limit, CVE-2020-10735): both must stay
-            # a simple ignored message, not a crash of the thread.
+        except Exception as e:
+            # Broad on purpose: this parses bytes from the network (untrusted trust
+            # boundary), and json.loads can raise more than JSONDecodeError on a crafted
+            # payload (oversized int -> ValueError, deeply nested array -> RecursionError,
+            # ...). Any of them must stay a simple ignored message, never a crash of the
+            # thread.
             print(f"[robotkraft_mqtt] Message illisible sur {msg.topic}, ignoré : {e}", file=sys.stderr)
             return
         if not isinstance(message, dict) or any(f not in message for f in _REQUIRED_FIELDS):
