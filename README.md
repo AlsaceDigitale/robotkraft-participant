@@ -283,6 +283,50 @@ Toutes les commandes sont `make <cible>`. Le Makefile racine inclut `mk/{setup,r
 
 ---
 
+## MQTT : réception des consignes
+
+Pendant les épreuves, l'organisation envoie la consigne en cours par MQTT, sur le topic
+`robotkraft/<ton équipe>/consigne`. Le module `scripts/mqtt/robotkraft_mqtt.py` s'occupe de
+la connexion et d'un point piégeux : le broker republie le dernier message avec `retain`
+(pour qu'un script démarrant en retard reçoive quand même sa consigne), ce qui veut aussi
+dire qu'un vieux message de test peut réapparaître comme si c'était la consigne du jour. La
+bibliothèque **ignore silencieusement tout message dont le champ `id` a déjà été vu**, et ne
+remonte que les consignes inédites. Elle gère aussi la reconnexion automatique si le réseau
+du lieu coupe.
+
+Aucun identifiant en dur : le compte (`equipeNN`) et le mot de passe transmis par
+l'organisation se passent en paramètre ou via `ROBOTKRAFT_MQTT_EQUIPE` /
+`ROBOTKRAFT_MQTT_PASSWORD` (voir `.env.example`).
+
+```bash
+export ROBOTKRAFT_MQTT_EQUIPE=equipe07
+export ROBOTKRAFT_MQTT_PASSWORD=...        # reçu par mail, jamais dans un script
+python3 scripts/mqtt/exemple_reception.py
+```
+
+Usage minimal, bloquant jusqu'à la prochaine consigne inédite :
+
+```python
+from robotkraft_mqtt import RecepteurConsigne
+
+recepteur = RecepteurConsigne()            # lit les deux variables d'environnement ci-dessus
+recepteur.connecter()
+consigne = recepteur.attendre_consigne()   # bloque jusqu'à la prochaine consigne inédite
+print(consigne["epreuve"], consigne["consigne"])
+```
+
+Pour une boucle robot qui tourne déjà en continu, mode callback plutôt que bloquant :
+`recepteur.sur_consigne(ma_fonction)` avant `connecter()`. Les deux usages sont commentés
+dans `scripts/mqtt/exemple_reception.py`.
+
+Le contenu du champ `consigne` dépend de l'épreuve (TRI, MIX, ETIQ, FORM, GLOBE) et n'est pas
+interprété par la bibliothèque : il arrive tel quel, à charge pour toi de le traiter.
+
+Le broker passe sur le port 443, qui franchit la plupart des WiFi d'évènement. Si ton réseau
+le bloque quand même, essaie `RecepteurConsigne(transport="websockets")`.
+
+---
+
 ## Bloqué ?
 
 Pendant l'événement, le canal d'entraide et le contact de l'organisation vous sont
@@ -572,6 +616,49 @@ All commands are `make <target>`. The root Makefile includes `mk/{setup,robot,da
 | `make calibrate-wb` | White balance calibration |
 | `make view-camera DEVICE=/dev/video2` | Live preview of a USB webcam (U20CAM, ET-S231 and other UVC), runs on the host |
 | `make photo [FILE=...] [CROP_X/Y/W/H=...]` | Takes a photo |
+
+---
+
+## MQTT: receiving instructions
+
+During the challenges, the organization sends the current instruction over MQTT, on the
+topic `robotkraft/<your team>/consigne`. The `scripts/mqtt/robotkraft_mqtt.py` module
+handles the connection and a tricky bit: the broker republishes the last message with
+`retain` (so a script starting late still gets its instruction), which also means an old
+test message can resurface as if it were today's instruction. The library **silently
+ignores any message whose `id` field has already been seen**, and only surfaces new
+instructions. It also handles automatic reconnection if the venue's network drops.
+
+No hardcoded credentials: the account (`equipeNN`) and password handed out by the
+organization are passed as parameters or via `ROBOTKRAFT_MQTT_EQUIPE` /
+`ROBOTKRAFT_MQTT_PASSWORD` (see `.env.example`).
+
+```bash
+export ROBOTKRAFT_MQTT_EQUIPE=equipe07
+export ROBOTKRAFT_MQTT_PASSWORD=...        # received by email, never in a script
+python3 scripts/mqtt/exemple_reception.py
+```
+
+Minimal usage, blocking until the next new instruction:
+
+```python
+from robotkraft_mqtt import RecepteurConsigne
+
+recepteur = RecepteurConsigne()            # reads the two environment variables above
+recepteur.connecter()
+consigne = recepteur.attendre_consigne()   # blocks until the next new instruction
+print(consigne["epreuve"], consigne["consigne"])
+```
+
+For a robot loop that's already running continuously, use the callback mode instead of
+blocking: `recepteur.sur_consigne(my_function)` before `connecter()`. Both usages are
+commented in `scripts/mqtt/exemple_reception.py`.
+
+The content of the `consigne` field depends on the challenge (TRI, MIX, ETIQ, FORM, GLOBE)
+and isn't interpreted by the library: it arrives as-is, yours to handle.
+
+The broker runs on port 443, which gets through most event WiFi networks. If your network
+still blocks it, try `RecepteurConsigne(transport="websockets")`.
 
 ---
 
