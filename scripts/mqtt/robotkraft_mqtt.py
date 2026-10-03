@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Client MQTT pour recevoir les consignes RobotKraft. Dédoublonne automatiquement par
-`id` : un message déjà vu (rejoué par le `retain` du broker) est ignoré silencieusement,
-seule une consigne inédite est remontée."""
+"""MQTT client for receiving RobotKraft instructions. Automatically deduplicates by
+`id`: a message already seen (replayed by the broker's `retain`) is silently ignored,
+only a new instruction is surfaced."""
 
 import json
 import os
@@ -11,219 +11,220 @@ from queue import Empty, Queue
 
 import paho.mqtt.client as mqtt
 
-HOTE_TCP = "mqtt.teleport.francsducloud.wtf"
-PORT_TCP = 443  # MQTT sur TLS, port 443 (pas 8883) pour passer les WiFi d'évènement filtrés
+HOST_TCP = "mqtt.teleport.francsducloud.wtf"
+PORT_TCP = 443  # MQTT over TLS, port 443 (not 8883) to get through filtered event WiFi
 
-HOTE_WS = "mqtt-ws.teleport.francsducloud.wtf"
-PORT_WS = 443  # wss, repli si le port TCP ci-dessus est bloqué sur le réseau du lieu
+HOST_WS = "mqtt-ws.teleport.francsducloud.wtf"
+PORT_WS = 443  # wss, fallback if the TCP port above is blocked on the venue's network
 
-_CHAMPS_REQUIS = ("epreuve", "variante", "id", "consigne")  # format imposé par l'organisation
-
-
-class ErreurMQTT(Exception):
-    """Levée pour toute erreur de connexion/configuration compréhensible par un participant
-    (identifiants refusés, broker injoignable, équipe manquante...)."""
+_REQUIRED_FIELDS = ("epreuve", "variante", "id", "consigne")  # format imposed by the organization
 
 
-class _Dedupliqueur:
-    """Mémorise les `id` de consigne déjà vus. C'est la seule logique non triviale du
-    module : le broker republie le dernier message (`retain`) à chaque (re)connexion ou
-    (ré)abonnement, y compris un message d'un test antérieur."""
+class MQTTError(Exception):
+    """Raised for any connection/configuration error meant to be understandable by a
+    participant (refused credentials, unreachable broker, missing team...)."""
+
+
+class _Deduplicator:
+    """Remembers which instruction `id`s have already been seen. This is the only
+    non-trivial logic in the module: the broker republishes the last message (`retain`)
+    on every (re)connection or (re)subscription, including a message from an earlier
+    test."""
 
     def __init__(self):
-        self._vus = set()
+        self._seen = set()
 
-    def est_nouvelle(self, id_message):
-        if id_message in self._vus:
+    def is_new(self, message_id):
+        if message_id in self._seen:
             return False
-        self._vus.add(id_message)
+        self._seen.add(message_id)
         return True
 
 
-class RecepteurConsigne:
-    """Reçoit les consignes RobotKraft d'une équipe sur `robotkraft/<equipe>/consigne`.
+class InstructionReceiver:
+    """Receives RobotKraft instructions for a team on `robotkraft/<team>/consigne`.
 
-    Usage bloquant, le plus simple :
-        recepteur = RecepteurConsigne("equipe07", mot_de_passe)
-        recepteur.connecter()
-        consigne = recepteur.attendre_consigne()   # bloque jusqu'à la prochaine consigne inédite
-        print(consigne["epreuve"], consigne["consigne"])
+    Simplest, blocking usage:
+        receiver = InstructionReceiver("equipe07", password)
+        receiver.connect()
+        instruction = receiver.wait_for_instruction()   # blocks until the next new instruction
+        print(instruction["epreuve"], instruction["consigne"])
 
-    Usage par callback, pour une boucle robot qui tourne déjà en continu :
-        recepteur = RecepteurConsigne("equipe07", mot_de_passe)
-        recepteur.sur_consigne(lambda msg: print("nouvelle consigne :", msg))
-        recepteur.connecter()
+    Callback usage, for a robot loop that's already running continuously:
+        receiver = InstructionReceiver("equipe07", password)
+        receiver.on_instruction(lambda msg: print("new instruction:", msg))
+        receiver.connect()
         ...
-        recepteur.arreter()
+        receiver.stop()
 
-    Le compte et le mot de passe ne sont jamais à écrire en dur dans le code : les
-    passer en paramètre, ou via les variables d'environnement ROBOTKRAFT_MQTT_EQUIPE /
-    ROBOTKRAFT_MQTT_PASSWORD.
+    The account and password must never be hardcoded: pass them as parameters, or via
+    the ROBOTKRAFT_MQTT_EQUIPE / ROBOTKRAFT_MQTT_PASSWORD environment variables.
     """
 
-    def __init__(self, equipe=None, mot_de_passe=None, *, transport="tcp"):
-        equipe = equipe or os.environ.get("ROBOTKRAFT_MQTT_EQUIPE")
-        mot_de_passe = mot_de_passe or os.environ.get("ROBOTKRAFT_MQTT_PASSWORD")
-        if not equipe:
-            raise ErreurMQTT(
+    def __init__(self, team=None, password=None, *, transport="tcp"):
+        team = team or os.environ.get("ROBOTKRAFT_MQTT_EQUIPE")
+        password = password or os.environ.get("ROBOTKRAFT_MQTT_PASSWORD")
+        if not team:
+            raise MQTTError(
                 "Compte équipe manquant : passe-le en paramètre (ex. \"equipe07\") ou via "
                 "la variable d'environnement ROBOTKRAFT_MQTT_EQUIPE."
             )
-        if not mot_de_passe:
-            raise ErreurMQTT(
+        if not password:
+            raise MQTTError(
                 "Mot de passe manquant : passe-le en paramètre, ou via la variable "
                 "d'environnement ROBOTKRAFT_MQTT_PASSWORD (celui transmis par l'organisation)."
             )
         if transport not in ("tcp", "websockets"):
-            raise ErreurMQTT('transport doit être "tcp" (défaut) ou "websockets".')
+            raise MQTTError('transport doit être "tcp" (défaut) ou "websockets".')
 
-        self.equipe = equipe
-        self._topic = f"robotkraft/{equipe}/consigne"
-        self._dedup = _Dedupliqueur()
+        self.team = team
+        self._topic = f"robotkraft/{team}/consigne"
+        self._deduplicator = _Deduplicator()
         self._queue = Queue()
         self._callback = None
-        self._connecte = threading.Event()
-        self._erreur_connexion = None
-        self._mid_abonnement = None
+        self._connected = threading.Event()
+        self._connection_error = None
+        self._subscription_mid = None
 
-        self._hote = HOTE_WS if transport == "websockets" else HOTE_TCP
+        self._host = HOST_WS if transport == "websockets" else HOST_TCP
         self._port = PORT_WS if transport == "websockets" else PORT_TCP
 
         self._client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2, client_id="", transport=transport
         )
-        self._client.username_pw_set(equipe, mot_de_passe)
-        self._client.tls_set()  # certificat Let's Encrypt, public, rien à fournir
+        self._client.username_pw_set(team, password)
+        self._client.tls_set()  # Let's Encrypt certificate, public, nothing to provide
         self._client.reconnect_delay_set(min_delay=1, max_delay=30)
         self._client.on_connect = self._on_connect
         self._client.on_disconnect = self._on_disconnect
         self._client.on_subscribe = self._on_subscribe
         self._client.on_message = self._on_message
 
-    def sur_consigne(self, callback):
-        """Enregistre `callback(consigne: dict)`, appelée pour chaque consigne inédite."""
+    def on_instruction(self, callback):
+        """Registers `callback(instruction: dict)`, called for each new instruction."""
         self._callback = callback
 
-    def connecter(self, timeout=10):
-        """Se connecte au broker et attend la confirmation (CONNACK + abonnement accepté).
-        Lève ErreurMQTT si le réseau, les identifiants ou l'abonnement posent problème,
-        plutôt qu'une exception brute de paho-mqtt."""
-        # Repart à zéro à chaque appel : sinon un connecter() après un échec, ou après
-        # arreter(), réutiliserait l'état (succès ou erreur) de la tentative précédente.
-        self._connecte.clear()
-        self._erreur_connexion = None
+    def connect(self, timeout=10):
+        """Connects to the broker and waits for confirmation (CONNACK + accepted
+        subscription). Raises MQTTError on network, credentials or subscription issues,
+        instead of a raw paho-mqtt exception."""
+        # Reset on every call: otherwise a connect() after a failure, or after stop(),
+        # would reuse the previous attempt's state (success or error).
+        self._connected.clear()
+        self._connection_error = None
         try:
-            self._client.connect(self._hote, self._port, keepalive=60)
+            self._client.connect(self._host, self._port, keepalive=60)
         except Exception as e:
-            raise ErreurMQTT(
-                f"Impossible de joindre le broker MQTT ({self._hote}:{self._port}) : {e}. "
+            raise MQTTError(
+                f"Impossible de joindre le broker MQTT ({self._host}:{self._port}) : {e}. "
                 "Vérifie ta connexion réseau."
             ) from e
 
         self._client.loop_start()
-        if not self._connecte.wait(timeout):
+        if not self._connected.wait(timeout):
             self._client.loop_stop()
-            raise ErreurMQTT(
+            raise MQTTError(
                 f"Pas de réponse du broker après {timeout}s. Réseau filtré (essaie "
                 'transport="websockets") ou broker indisponible.'
             )
-        if self._erreur_connexion is not None:
+        if self._connection_error is not None:
             self._client.loop_stop()
-            raise self._erreur_connexion
+            raise self._connection_error
         return self
 
-    def attendre_consigne(self, timeout=None):
-        """Bloque jusqu'à la prochaine consigne inédite (par `id`) et la retourne en entier
-        (`epreuve`, `variante`, `id`, `consigne`). Lève TimeoutError si `timeout` est dépassé."""
+    def wait_for_instruction(self, timeout=None):
+        """Blocks until the next new instruction (by `id`) and returns it whole
+        (`epreuve`, `variante`, `id`, `consigne`). Raises TimeoutError if `timeout` is
+        exceeded."""
         try:
             return self._queue.get(timeout=timeout)
         except Empty:
             raise TimeoutError(f"Aucune nouvelle consigne reçue après {timeout}s.")
 
-    def arreter(self):
-        """Ferme proprement la connexion (ne tente plus de se reconnecter ensuite)."""
+    def stop(self):
+        """Closes the connection cleanly (no further reconnection attempts)."""
         self._client.disconnect()
         self._client.loop_stop()
 
     def _on_connect(self, client, userdata, connect_flags, reason_code, properties):
         if reason_code.is_failure:
-            self._erreur_connexion = ErreurMQTT(
-                f"Connexion refusée par le broker pour \"{self.equipe}\" : {reason_code}. "
+            self._connection_error = MQTTError(
+                f"Connexion refusée par le broker pour \"{self.team}\" : {reason_code}. "
                 "Vérifie le compte et le mot de passe transmis par l'organisation."
             )
-            self._connecte.set()
-            client.disconnect()  # pas de ré-essai en boucle sur un mot de passe faux
+            self._connected.set()
+            client.disconnect()  # no retry loop on a wrong password
             return
-        # Pas de self._connecte.set() ici : subscribe() ne fait qu'envoyer la demande,
-        # c'est on_subscribe (SUBACK) qui confirme qu'on est vraiment prêt à recevoir.
+        # No self._connected.set() here: subscribe() only sends the request, it's
+        # on_subscribe (SUBACK) that confirms we're actually ready to receive.
         result, mid = client.subscribe(self._topic)
         if result != mqtt.MQTT_ERR_SUCCESS:
-            self._erreur_connexion = ErreurMQTT(f"Échec de l'abonnement à {self._topic} (code {result}).")
-            self._connecte.set()
+            self._connection_error = MQTTError(f"Échec de l'abonnement à {self._topic} (code {result}).")
+            self._connected.set()
             return
-        self._mid_abonnement = mid
+        self._subscription_mid = mid
 
     def _on_disconnect(self, client, userdata, disconnect_flags, reason_code, properties):
-        if reason_code.is_failure and self._erreur_connexion is None:
+        if reason_code.is_failure and self._connection_error is None:
             print("[robotkraft_mqtt] Connexion perdue, reconnexion automatique en cours...", file=sys.stderr)
 
     def _on_subscribe(self, client, userdata, mid, reason_code_list, properties):
-        if mid != self._mid_abonnement:
-            return  # SUBACK d'un abonnement précédent (reconnexion déjà remplacée), ignoré
-        echec = [rc for rc in reason_code_list if rc.is_failure]
-        if echec:
-            erreur = ErreurMQTT(
+        if mid != self._subscription_mid:
+            return  # SUBACK for a previous subscription (already superseded by a reconnect), ignored
+        failed = [rc for rc in reason_code_list if rc.is_failure]
+        if failed:
+            error = MQTTError(
                 f"Abonnement à {self._topic} refusé par le broker : "
-                f"{', '.join(str(rc) for rc in echec)}."
+                f"{', '.join(str(rc) for rc in failed)}."
             )
-            if self._connecte.is_set():
-                # Reconnexion en cours de session : connecter() a déjà rendu la main,
-                # personne ne lira plus _erreur_connexion, on se contente de signaler.
-                print(f"[robotkraft_mqtt] {erreur}", file=sys.stderr)
+            if self._connected.is_set():
+                # Mid-session reconnect: connect() has already returned, nobody will
+                # read _connection_error anymore, just report it.
+                print(f"[robotkraft_mqtt] {error}", file=sys.stderr)
             else:
-                self._erreur_connexion = erreur
-        self._connecte.set()
+                self._connection_error = error
+        self._connected.set()
 
     def _on_message(self, client, userdata, msg):
-        # Un plantage ici tuerait le thread réseau de paho (reconnexion comprise) : toute
-        # cette méthode doit donc rester incassable, même sur un message mal formé ou une
-        # callback participant qui lève une exception.
+        # A crash here would kill paho's network thread (reconnection included): this
+        # whole method must stay unbreakable, even on a malformed message or a
+        # participant callback that raises.
         try:
             message = json.loads(msg.payload.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
             print(f"[robotkraft_mqtt] Message illisible sur {msg.topic}, ignoré : {e}", file=sys.stderr)
             return
-        if not isinstance(message, dict) or any(c not in message for c in _CHAMPS_REQUIS):
+        if not isinstance(message, dict) or any(f not in message for f in _REQUIRED_FIELDS):
             print(
                 f"[robotkraft_mqtt] Message incomplet sur {msg.topic} (attendu : "
-                f"{', '.join(_CHAMPS_REQUIS)}), ignoré.",
+                f"{', '.join(_REQUIRED_FIELDS)}), ignoré.",
                 file=sys.stderr,
             )
             return
-        id_message = message["id"]
-        if not isinstance(id_message, (str, int, float)):
+        message_id = message["id"]
+        if not isinstance(message_id, (str, int, float)):
             print(f"[robotkraft_mqtt] Champ 'id' inexploitable sur {msg.topic}, ignoré.", file=sys.stderr)
             return
-        # Validation faite avant le dédoublonnage : un message incomplet ne doit pas
-        # "consommer" l'id et bloquer la version corrigée qui arriverait avec le même id.
-        if not self._dedup.est_nouvelle(id_message):
-            return  # déjà vu (rejoué par retain), on ignore silencieusement
+        # Validated before deduplication: an incomplete message must not "consume" the
+        # id and block the corrected version that would later arrive with the same id.
+        if not self._deduplicator.is_new(message_id):
+            return  # already seen (replayed by retain), silently ignored
         self._queue.put(message)
         if self._callback is not None:
             try:
                 self._callback(message)
             except Exception as e:
-                print(f"[robotkraft_mqtt] Erreur dans la callback sur_consigne, ignorée : {e}", file=sys.stderr)
+                print(f"[robotkraft_mqtt] Erreur dans la callback on_instruction, ignorée : {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
     if "--self-test" in sys.argv:
-        d = _Dedupliqueur()
-        assert d.est_nouvelle("t1-001") is True, "une id jamais vue doit être acceptée"
-        assert d.est_nouvelle("t1-001") is False, "une id déjà vue doit être rejetée (message retain rejoué)"
-        assert d.est_nouvelle("t1-002") is True, "une id différente reste acceptée"
-        assert d.est_nouvelle("t1-002") is False, "idempotence : un deuxième doublon reste rejeté"
+        d = _Deduplicator()
+        assert d.is_new("t1-001") is True, "a never-seen id must be accepted"
+        assert d.is_new("t1-001") is False, "an already-seen id must be rejected (replayed retain message)"
+        assert d.is_new("t1-002") is True, "a different id is still accepted"
+        assert d.is_new("t1-002") is False, "idempotence: a second duplicate is still rejected"
         print("self-test OK")
     else:
-        print(__doc__)
-        print("\nVoir scripts/mqtt/exemple_reception.py pour un exemple d'utilisation.")
+        print("RobotKraft : bibliothèque de réception MQTT des consignes.")
+        print("Voir scripts/mqtt/example_reception.py pour un exemple d'utilisation.")

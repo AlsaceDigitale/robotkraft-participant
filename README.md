@@ -301,29 +301,29 @@ l'organisation se passent en paramètre ou via `ROBOTKRAFT_MQTT_EQUIPE` /
 ```bash
 export ROBOTKRAFT_MQTT_EQUIPE=equipe07
 export ROBOTKRAFT_MQTT_PASSWORD=...        # reçu par mail, jamais dans un script
-python3 scripts/mqtt/exemple_reception.py
+python3 scripts/mqtt/example_reception.py
 ```
 
 Usage minimal, bloquant jusqu'à la prochaine consigne inédite :
 
 ```python
-from robotkraft_mqtt import RecepteurConsigne
+from robotkraft_mqtt import InstructionReceiver
 
-recepteur = RecepteurConsigne()            # lit les deux variables d'environnement ci-dessus
-recepteur.connecter()
-consigne = recepteur.attendre_consigne()   # bloque jusqu'à la prochaine consigne inédite
-print(consigne["epreuve"], consigne["consigne"])
+receiver = InstructionReceiver()               # lit les deux variables d'environnement ci-dessus
+receiver.connect()
+instruction = receiver.wait_for_instruction()  # bloque jusqu'à la prochaine consigne inédite
+print(instruction["epreuve"], instruction["consigne"])
 ```
 
 Pour une boucle robot qui tourne déjà en continu, mode callback plutôt que bloquant :
-`recepteur.sur_consigne(ma_fonction)` avant `connecter()`. Les deux usages sont commentés
-dans `scripts/mqtt/exemple_reception.py`.
+`receiver.on_instruction(ma_fonction)` avant `connect()`. Les deux usages sont commentés
+dans `scripts/mqtt/example_reception.py`.
 
 Le contenu du champ `consigne` dépend de l'épreuve (TRI, MIX, ETIQ, FORM, GLOBE) et n'est pas
 interprété par la bibliothèque : il arrive tel quel, à charge pour toi de le traiter.
 
 Le broker passe sur le port 443, qui franchit la plupart des WiFi d'évènement. Si ton réseau
-le bloque quand même, essaie `RecepteurConsigne(transport="websockets")`.
+le bloque quand même, essaie `InstructionReceiver(transport="websockets")`.
 
 ---
 
@@ -636,29 +636,29 @@ organization are passed as parameters or via `ROBOTKRAFT_MQTT_EQUIPE` /
 ```bash
 export ROBOTKRAFT_MQTT_EQUIPE=equipe07
 export ROBOTKRAFT_MQTT_PASSWORD=...        # received by email, never in a script
-python3 scripts/mqtt/exemple_reception.py
+python3 scripts/mqtt/example_reception.py
 ```
 
 Minimal usage, blocking until the next new instruction:
 
 ```python
-from robotkraft_mqtt import RecepteurConsigne
+from robotkraft_mqtt import InstructionReceiver
 
-recepteur = RecepteurConsigne()            # reads the two environment variables above
-recepteur.connecter()
-consigne = recepteur.attendre_consigne()   # blocks until the next new instruction
-print(consigne["epreuve"], consigne["consigne"])
+receiver = InstructionReceiver()               # reads the two environment variables above
+receiver.connect()
+instruction = receiver.wait_for_instruction()  # blocks until the next new instruction
+print(instruction["epreuve"], instruction["consigne"])
 ```
 
 For a robot loop that's already running continuously, use the callback mode instead of
-blocking: `recepteur.sur_consigne(my_function)` before `connecter()`. Both usages are
-commented in `scripts/mqtt/exemple_reception.py`.
+blocking: `receiver.on_instruction(my_function)` before `connect()`. Both usages are
+commented in `scripts/mqtt/example_reception.py`.
 
 The content of the `consigne` field depends on the challenge (TRI, MIX, ETIQ, FORM, GLOBE)
 and isn't interpreted by the library: it arrives as-is, yours to handle.
 
 The broker runs on port 443, which gets through most event WiFi networks. If your network
-still blocks it, try `RecepteurConsigne(transport="websockets")`.
+still blocks it, try `InstructionReceiver(transport="websockets")`.
 
 ---
 
