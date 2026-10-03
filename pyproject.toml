@@ -9,6 +9,7 @@ dependencies = [
     "opencv-python==4.13.0.92",
     "depthai==3.7.1",
     "pyzmq==27.1.0",
+    "paho-mqtt==2.1.0",
 ]
 
 [project.optional-dependencies]
