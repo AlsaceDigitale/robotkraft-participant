@@ -122,12 +122,16 @@ class InstructionReceiver:
 
         self._client.loop_start()
         if not self._connected.wait(timeout):
+            # loop_stop() alone doesn't close the socket: disconnect() first, or a TCP/TLS
+            # connection that got no CONNACK/SUBACK stays open until garbage collection.
+            self._client.disconnect()
             self._client.loop_stop()
             raise MQTTError(
                 f"Pas de réponse du broker après {timeout}s. Réseau filtré (essaie "
                 'transport="websockets") ou broker indisponible.'
             )
         if self._connection_error is not None:
+            self._client.disconnect()
             self._client.loop_stop()
             raise self._connection_error
         return self
