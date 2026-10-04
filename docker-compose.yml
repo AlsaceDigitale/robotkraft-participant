@@ -13,6 +13,8 @@ services:
       - uv-cache:/opt/uv-cache
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
+      - ROBOTKRAFT_MQTT_EQUIPE=${ROBOTKRAFT_MQTT_EQUIPE:-}
+      - ROBOTKRAFT_MQTT_PASSWORD=${ROBOTKRAFT_MQTT_PASSWORD:-}
     shm_size: '2gb'
     stdin_open: true
     tty: true
